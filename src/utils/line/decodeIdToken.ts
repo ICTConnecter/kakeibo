@@ -25,12 +25,13 @@ export const decodeIdToken = async (
   }
   
   const url = "https://api.line.me/oauth2/v2.1/verify";
+  const params = new URLSearchParams();
+  params.append('id_token', idToken);
+  params.append('client_id', process.env.NEXT_PUBLIC_LINE_CHANNEL_ID!);
+  
   const result = await fetch(url, {
     method: `POST`,
-    body: new URLSearchParams({
-      'id_token': idToken,
-      'client_id': process.env.NEXT_PUBLIC_LINE_CHANNEL_ID!,
-    }),
+    body: params.toString(),
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
     },
