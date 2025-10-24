@@ -1,3 +1,4 @@
+/** Firestore型定義のエクスポート */
 export type { User } from './User';
 export type { Expense, ExpenseItem } from './Expense';
 export type { Income } from './Income';
