@@ -8,12 +8,12 @@ import {
 } from "react";
 // import { z } from "zod";
 import { LiffContext, LiffContextType } from "./liff";
-import { GetResType } from "@/app/api/auth/types";
+import { AuthResponse } from "@/app/api/auth/types";
 
 type Props = {
   children: ReactNode | null;
 };
-type UserInfo = GetResType
+type UserInfo = AuthResponse
 
 /**
  * 【Component】LiffComponentーーLIFF関連のComponent。

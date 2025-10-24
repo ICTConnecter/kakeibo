@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { UserAuthComponent } from '@/components/context/user';
 
-export default function ReceiptConfirmPage() {
+function ReceiptConfirmForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [loading, setLoading] = useState(false);
@@ -212,6 +212,21 @@ export default function ReceiptConfirmPage() {
                 </main>
             </div>
         </UserAuthComponent>
+    );
+}
+
+export default function ReceiptConfirmPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-4xl mb-4">⏳</div>
+                    <p className="text-gray-600">読み込み中...</p>
+                </div>
+            </div>
+        }>
+            <ReceiptConfirmForm />
+        </Suspense>
     );
 }
 

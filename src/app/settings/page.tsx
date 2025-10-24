@@ -6,11 +6,11 @@ import { LiffContext } from '@/components/context/liff';
 import Link from 'next/link';
 
 export default function SettingsPage() {
-    const { decodeResult, liff } = use(LiffContext);
+    const { decodeResult, liffObject } = use(LiffContext);
 
     const handleLogout = () => {
-        if (liff?.isLoggedIn()) {
-            liff.logout();
+        if (liffObject?.isLoggedIn()) {
+            liffObject.logout();
             window.location.href = '/';
         }
     };
