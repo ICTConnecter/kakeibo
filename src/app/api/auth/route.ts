@@ -1,44 +1,84 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-import { db } from '@/utils/firebase/initializeApp';
+import { getAdminDb } from '@/utils/firebase/admin';
 import { decodeIdToken } from '@/utils/line/decodeIdToken';
-import { GetResType } from './types';
-import { User } from '@/types/firestore/User';
+import { AuthResponse } from './types';
+import { User } from '@/types/firestore';
 
 export async function GET(req: NextRequest) {
-
   try {
-    // reqのBearerからtokenを受け取る
-    // const token = req.headers.get("Authorization")
-    const token = req.headers.get("Authorization")?.split(":")[1]
+    // Tokenの取得
+    const token = req.headers.get('Authorization')?.split(':')[1];
     if (!token) {
-      return NextResponse.json({ error: "Tokenが設定されていません。" }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Tokenが設定されていません。' },
+        { status: 400 }
+      );
     }
+
     // Tokenのdecode
-    const tokeDecodeResult = await decodeIdToken(token)
+    const tokenDecodeResult = await decodeIdToken(token);
+    const userId = tokenDecodeResult.sub;
 
-    const q = query(
-      collection(db, "users"),
-      where("lineId", "==", tokeDecodeResult.sub)
-    );
-    const querySnapshot = await getDocs(q);
-    if (querySnapshot.empty) {
+    const db = getAdminDb();
+
+    // ユーザー情報の取得
+    const userDoc = await db.collection('users').doc(userId).get();
+
+    if (!userDoc.exists) {
       // 登録情報が無かった場合
-      return NextResponse.json({ error: "登録情報が見当たりませんでした。" }, { status: 401 })
-    } else {
-      const doc = querySnapshot.docs[0]
-      const rec: Omit<User, 'lineId'> & Partial<Pick<User, 'lineId'>> = doc.data() as User
-      delete rec.lineId
-      const data: GetResType = rec
-
-      // return res.status(200).end(JSON.stringify(resBody));
-      return NextResponse.json(data, { status: 200 })
+      return NextResponse.json(
+        { 
+          error: '登録情報が見当たりませんでした。',
+          isRegistered: false
+        },
+        { status: 401 }
+      );
     }
 
+    const userData = userDoc.data() as User;
+
+    // ユーザーが所属するHouseholdを取得
+    // ownerIdで検索（初回登録時は必ずownerになる）
+    const householdsSnapshot = await db
+      .collection('households')
+      .where('ownerId', '==', userId)
+      .limit(1)
+      .get();
+
+    let householdId = '';
+    if (!householdsSnapshot.empty) {
+      householdId = householdsSnapshot.docs[0].id;
+    } else {
+      // ownerでない場合はmembersから検索（共有されている場合）
+      const allHouseholdsSnapshot = await db.collection('households').get();
+      for (const doc of allHouseholdsSnapshot.docs) {
+        const household = doc.data();
+        if (household.members && Array.isArray(household.members)) {
+          const isMember = household.members.some((member: any) => member.userId === userId);
+          if (isMember) {
+            householdId = doc.id;
+            break;
+          }
+        }
+      }
+    }
+
+    // レスポンスデータ
+    const data: AuthResponse = {
+      userId: userData.userId,
+      displayName: userData.displayName,
+      pictureUrl: userData.pictureUrl,
+      email: userData.email,
+      householdId: householdId,
+      isRegistered: true,
+    };
+
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
-    return NextResponse.json(error, { status: 500 })
+    console.error('Auth error:', error);
+    return NextResponse.json(
+      { error: 'Authentication failed', details: JSON.stringify(error) },
+      { status: 500 }
+    );
   }
 }
-
-
-

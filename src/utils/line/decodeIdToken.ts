@@ -12,6 +12,18 @@
 export const decodeIdToken = async (
   idToken: string
 ): Promise<DecodeIdTokenResult> => {
+  // テスト用のIDトークンが設定されている場合はテスト用のデータを返す
+  if (process.env.NEXT_PUBLIC_TEST_ID_TOKEN) {
+    return {
+      iss: "https://access.line.me",
+      sub: process.env.NEXT_PUBLIC_TEST_ID_TOKEN,
+      aud: process.env.NEXT_PUBLIC_LINE_CHANNEL_ID!,
+      exp: new Date().getTime() / 1000 + 3600,
+      iat: new Date().getTime() / 1000,
+      name: "TEST MODE",
+    };
+  }
+  
   const url = "https://api.line.me/oauth2/v2.1/verify";
   const result = await fetch(url, {
     method: `POST`,

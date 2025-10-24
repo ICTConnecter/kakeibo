@@ -1,3 +1,10 @@
-import { User } from "@/types/firestore/User";
-
-export type GetResType = Omit<User, "lineId">;
+// 認証レスポンス型
+export type AuthResponse = {
+    userId: string;
+    displayName: string;
+    pictureUrl: string;
+    email: string;
+    householdId: string;
+    isRegistered: boolean;
+    error?: string;
+}

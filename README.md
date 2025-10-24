@@ -11,6 +11,7 @@ AIを活用した家計簿管理システム。レシートをカメラで撮影
 - **データベース**: Firebase Firestore
 - **認証**: LINE LIFF（LINE Front-end Framework）
 - **AI画像認識**: Google AI Studio（Gemini API）
+- **画像ストレージ**: Firebase Storage
 - **デプロイ**: Vercel（推奨）
 
 ---
@@ -162,7 +163,7 @@ expenses/{expenseId}
     - price: number
     - quantity: number
   - memo: string
-  - receiptImageUrl: string (GCP Cloud Storage URL)
+  - receiptImageUrl: string (Firebase Storage URL)
   - createdAt: timestamp
   - updatedAt: timestamp
   - createdBy: string (作成者ユーザーID)
@@ -539,11 +540,11 @@ Google AI Studio（Gemini API）の画像解析機能を使用
 - 権限に応じた操作制限（viewer は閲覧のみ）
 
 ### 7.3 画像ストレージ
-- GCP Cloud Storage使用
-- バケット名: `{project-id}-receipts`
+- Firebase Storage使用
+- ストレージパス: `receipts/{timestamp}-{filename}`
 - アップロードサイズ制限（5MB）
-- 画像の暗号化保存
-- 署名付きURL発行による安全なアクセス
+- ダウンロードURLによる安全なアクセス
+- Firebase Security Rulesによるアクセス制御
 - 自動バックアップ設定
 
 ---
@@ -553,7 +554,7 @@ Google AI Studio（Gemini API）の画像解析機能を使用
 ### 8.1 必要な環境変数
 `.env.local` ファイルを作成し、以下を設定:
 ```
-# Firebase
+# Firebase (Client-side)
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=
@@ -561,16 +562,15 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 
+# Firebase Admin (Server-side)
+FIREBASE_ADMIN_CLIENT_EMAIL=
+FIREBASE_ADMIN_PRIVATE_KEY=
+
 # LINE LIFF
 NEXT_PUBLIC_LIFF_ID=
 
-# Google AI Studio
+# Google AI Studio (Gemini API)
 GOOGLE_AI_API_KEY=
-
-# GCP Cloud Storage
-GCP_PROJECT_ID=
-GCP_STORAGE_BUCKET=
-GCP_SERVICE_ACCOUNT_KEY=
 ```
 
 ### 8.2 インストール
@@ -580,7 +580,7 @@ npm install
 
 ### 8.3 必要なパッケージ
 ```bash
-npm i @line/liff firebase @google-cloud/storage @google/generative-ai
+npm i @line/liff firebase @google/generative-ai firebase-admin
 npm i -D @types/node typescript
 ```
 
