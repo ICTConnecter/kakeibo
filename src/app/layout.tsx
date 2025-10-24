@@ -1,8 +1,6 @@
 import "./globals.css";
 import { LiffComponent } from "@/components/context/liff";
-import Script from "next/script";
-
-declare var VConsole: any;
+import { VConsoleLoader } from "@/components/VConsoleLoader";
 
 export default function RootLayout({
   children,
@@ -12,12 +10,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-      <Script
-        src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"
-        onReady={() => {
-          new VConsole();
-        }}
-      />
+        <VConsoleLoader />
         <LiffComponent>
           {children}
         </LiffComponent>
