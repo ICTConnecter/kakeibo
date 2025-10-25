@@ -46,8 +46,7 @@ export async function POST(request: Request) {
     const userData: User = {
       userId: userId,
       displayName: decodeResult.name || '',
-      pictureUrl: decodeResult.picture || '',
-      email: decodeResult.email || '',
+      householdIds: [householdId],
       createdAt: now,
       updatedAt: now,
     };
