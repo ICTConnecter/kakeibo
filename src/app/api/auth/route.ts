@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getAdminDb } from '@/utils/firebase/admin';
 import { decodeIdToken } from '@/utils/line/decodeIdToken';
 import { AuthResponse } from './types';
-import { User } from '@/types/firestore';
+import { User, Household } from '@/types/firestore';
 
 export async function GET(req: NextRequest) {
   try {
@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    console.log("token", token);
     // Tokenのdecode
     const tokenDecodeResult = await decodeIdToken(token);
     const userId = tokenDecodeResult.sub;
@@ -37,28 +38,23 @@ export async function GET(req: NextRequest) {
 
     const userData = userDoc.data() as User;
 
-    // ユーザーが所属するHouseholdを取得
-    // ownerIdで検索（初回登録時は必ずownerになる）
-    const householdsSnapshot = await db
-      .collection('households')
-      .where('ownerId', '==', userId)
-      .limit(1)
-      .get();
-
-    let householdId = '';
-    if (!householdsSnapshot.empty) {
-      householdId = householdsSnapshot.docs[0].id;
-    } else {
-      // ownerでない場合はmembersから検索（共有されている場合）
-      const allHouseholdsSnapshot = await db.collection('households').get();
-      for (const doc of allHouseholdsSnapshot.docs) {
-        const household = doc.data();
-        if (household.members && Array.isArray(household.members)) {
-          const isMember = household.members.some((member: any) => member.userId === userId);
-          if (isMember) {
-            householdId = doc.id;
-            break;
-          }
+    // ユーザーが所属するすべてのHousehold情報を取得
+    const households: Household[] = [];
+    
+    if (userData.householdIds && userData.householdIds.length > 0) {
+      for (const householdId of userData.householdIds) {
+        const householdDoc = await db.collection('households').doc(householdId).get();
+        
+        if (householdDoc.exists) {
+          const householdData = householdDoc.data();
+          households.push({
+            householdId: householdDoc.id,
+            name: householdData?.name || '',
+            ownerId: householdData?.ownerId || '',
+            members: householdData?.members || [],
+            createdAt: householdData?.createdAt || 0,
+            updatedAt: householdData?.updatedAt || 0,
+          } as Household);
         }
       }
     }
@@ -67,9 +63,7 @@ export async function GET(req: NextRequest) {
     const data: AuthResponse = {
       userId: userData.userId,
       displayName: userData.displayName,
-      pictureUrl: userData.pictureUrl,
-      email: userData.email,
-      householdId: householdId,
+      householdIds: households,
       isRegistered: true,
     };
 

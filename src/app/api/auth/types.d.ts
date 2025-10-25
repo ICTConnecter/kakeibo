@@ -2,9 +2,7 @@
 export type AuthResponse = {
     userId: string;
     displayName: string;
-    pictureUrl: string;
-    email: string;
-    householdId: string;
+    householdIds: Household[];
     isRegistered: boolean;
     error?: string;
 }
