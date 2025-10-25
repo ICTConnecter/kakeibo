@@ -50,11 +50,13 @@ export default function HomePage() {
                         <h1 className="text-2xl font-bold text-gray-800">AI家計簿</h1>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600">{decodeResult?.name}</span>
-                            <img
-                                src={decodeResult?.picture || ''}
-                                alt="プロフィール"
-                                className="w-8 h-8 rounded-full"
-                            />
+                            {decodeResult?.picture && (
+                                <img
+                                    src={decodeResult.picture}
+                                    alt="プロフィール"
+                                    className="w-8 h-8 rounded-full"
+                                />
+                            )}
                         </div>
                     </div>
                 </header>
@@ -127,7 +129,7 @@ export default function HomePage() {
                 {/* FABボタン */}
                 <div className="fixed bottom-20 right-4 flex flex-col gap-2">
                     <Link
-                        href="/incomes/new"
+                        href="/data/new"
                         className="w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition"
                         title="収入追加"
                     >

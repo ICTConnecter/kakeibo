@@ -13,14 +13,14 @@ export const decodeIdToken = async (
   idToken: string
 ): Promise<DecodeIdTokenResult> => {
   // テスト用のIDトークンが設定されている場合はテスト用のデータを返す
-  if (process.env.NEXT_PUBLIC_TEST_ID_TOKEN) {
+  if (process.env.NEXT_PUBLIC_MODE && process.env.NEXT_PUBLIC_MODE === idToken) {
     return {
-      iss: "https://access.line.me",
-      sub: process.env.NEXT_PUBLIC_TEST_ID_TOKEN,
-      aud: process.env.NEXT_PUBLIC_LINE_CHANNEL_ID!,
-      exp: new Date().getTime() / 1000 + 3600,
-      iat: new Date().getTime() / 1000,
-      name: "TEST MODE",
+      iss: process.env.NEXT_PUBLIC_LINE_ISS || "",
+      sub: process.env.NEXT_PUBLIC_LINE_SUB || "",
+      aud: process.env.NEXT_PUBLIC_LINE_AUD || "",
+      exp: Number(process.env.NEXT_PUBLIC_LINE_EXP) || 0,
+      iat: Number(process.env.NEXT_PUBLIC_LINE_IAT) || 0,
+      name: process.env.NEXT_PUBLIC_LINE_NAME + "(TEST MODE)" || "",
     };
   }
   

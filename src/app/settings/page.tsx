@@ -27,11 +27,13 @@ export default function SettingsPage() {
                     {/* プロフィール */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center gap-4">
-                            <img
-                                src={decodeResult?.picture || ''}
-                                alt="プロフィール"
-                                className="w-16 h-16 rounded-full"
-                            />
+                            {decodeResult?.picture && (
+                                <img
+                                    src={decodeResult.picture}
+                                    alt="プロフィール"
+                                    className="w-16 h-16 rounded-full"
+                                />
+                            )}
                             <div>
                                 <p className="font-semibold text-lg">{decodeResult?.name}</p>
                                 <p className="text-sm text-gray-500">{decodeResult?.email}</p>

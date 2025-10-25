@@ -12,13 +12,15 @@ export default function Home() {
     <>
       <UserAuthComponent>
         <div className="flex flex-col space-x-4 mx-auto">
-          <Image
-            src={decodeResult?.picture || ''}
-            alt="プロフィール画像"
-            width={144}
-            height={144}
-            className="rounded-full object-cover"
-          />
+          {decodeResult?.picture && (
+            <Image
+              src={decodeResult.picture}
+              alt="プロフィール画像"
+              width={144}
+              height={144}
+              className="rounded-full object-cover"
+            />
+          )}
           <div className="w-full mt-4 max-w-80">
             <h3 className="text-xl font-bold">{decodeResult?.name}</h3>
           </div>

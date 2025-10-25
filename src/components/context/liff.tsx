@@ -40,11 +40,11 @@ export const LiffComponent = ({ children }: Props) => {
   // IdTokenとLine情報の取得
   useEffect(() => {
     // テストモードの場合
-    if (process.env.NEXT_PUBLIC_TEST_ID_TOKEN) {
+    if (process.env.NEXT_PUBLIC_MODE) {
       const setTestData = async () => {
-        if (!process.env.NEXT_PUBLIC_TEST_ID_TOKEN) return;
-        setIdToken(process.env.NEXT_PUBLIC_TEST_ID_TOKEN);
-        setDecodeResult(await decodeIdToken(process.env.NEXT_PUBLIC_TEST_ID_TOKEN));
+        if (!process.env.NEXT_PUBLIC_MODE) return;
+        setIdToken(process.env.NEXT_PUBLIC_MODE);
+        setDecodeResult(await decodeIdToken(process.env.NEXT_PUBLIC_MODE));
         console.log("テストモードのデータを設定しました");
         console.log("idToken", idToken);
         console.log("decodeResult", decodeResult);
