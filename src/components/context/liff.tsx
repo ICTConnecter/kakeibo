@@ -65,6 +65,7 @@ export const LiffComponent = ({ children }: Props) => {
         setLiffObject(liff)
         if (liff.isLoggedIn()) {
           const idToken = liff.getIDToken();
+          console.log("idToken", idToken);
           if (idToken) {
             setIdToken(idToken);
             setDecodeResult(await decodeIdToken(idToken));
