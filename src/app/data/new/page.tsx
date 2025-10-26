@@ -1,15 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserAuthComponent } from '@/components/context/user';
+import { UserAuthContext } from '@/components/context/user';
+import { HouseholdContext } from '@/components/context/household';
 
 type TransactionType = 'income' | 'expense';
 
-export default function NewTransactionPage() {
+function NewTransactionForm() {
     const router = useRouter();
+    const { userInfo } = useContext(UserAuthContext);
+    const { categories, wallets, expenseTypes, setHouseholdId, loading: householdLoading } = useContext(HouseholdContext);
+    
     const [loading, setLoading] = useState(false);
     const [transactionType, setTransactionType] = useState<TransactionType>('income');
+    
+    // ユーザー情報からhouseholdIdを設定
+    useEffect(() => {
+        if (userInfo?.households && userInfo.households.length > 0) {
+            setHouseholdId(userInfo.households[0].householdId);
+        }
+    }, [userInfo, setHouseholdId]);
     
     // 収入用フォームデータ
     const [incomeFormData, setIncomeFormData] = useState({
@@ -38,8 +49,13 @@ export default function NewTransactionPage() {
         setLoading(true);
 
         try {
-            // TODO: 実際のhouseholdIdを取得
-            const householdId = 'temp-household-id';
+            // userInfoから実際のhouseholdIdを取得
+            const householdId = userInfo?.households?.[0]?.householdId;
+            
+            if (!householdId) {
+                alert('家計簿情報が見つかりません');
+                return;
+            }
 
             let response;
             
@@ -86,8 +102,7 @@ export default function NewTransactionPage() {
     };
 
     return (
-        <UserAuthComponent>
-            <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gray-50">
                 {/* ヘッダー */}
                 <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
                     <div className="flex items-center justify-between max-w-7xl mx-auto">
@@ -221,24 +236,17 @@ export default function NewTransactionPage() {
                                 }}
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                                 required
+                                disabled={householdLoading}
                             >
                                 <option value="">選択してください</option>
-                                {transactionType === 'income' ? (
-                                    <>
-                                        <option value="salary">給与</option>
-                                        <option value="bonus">ボーナス</option>
-                                        <option value="side">副業</option>
-                                        <option value="other">その他</option>
-                                    </>
-                                ) : (
-                                    <>
-                                        <option value="food">食費</option>
-                                        <option value="transport">交通費</option>
-                                        <option value="entertainment">娯楽</option>
-                                        <option value="utilities">光熱費</option>
-                                        <option value="other">その他</option>
-                                    </>
-                                )}
+                                {categories
+                                    .filter(cat => cat.type === transactionType)
+                                    .map(category => (
+                                        <option key={category.categoryId} value={category.categoryId}>
+                                            {category.icon} {category.name}
+                                        </option>
+                                    ))
+                                }
                             </select>
                         </div>
 
@@ -258,11 +266,14 @@ export default function NewTransactionPage() {
                                 }}
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                                 required
+                                disabled={householdLoading}
                             >
                                 <option value="">選択してください</option>
-                                <option value="bank">銀行口座</option>
-                                <option value="cash">現金</option>
-                                <option value="credit">クレジットカード</option>
+                                {wallets.map(wallet => (
+                                    <option key={wallet.walletId} value={wallet.walletId}>
+                                        {wallet.icon} {wallet.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -276,10 +287,14 @@ export default function NewTransactionPage() {
                                     value={expenseFormData.expenseTypeId}
                                     onChange={(e) => setExpenseFormData({ ...expenseFormData, expenseTypeId: e.target.value })}
                                     className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    disabled={householdLoading}
                                 >
                                     <option value="">なし</option>
-                                    <option value="business">事業費</option>
-                                    <option value="personal">個人費</option>
+                                    {expenseTypes.map(expenseType => (
+                                        <option key={expenseType.expenseTypeId} value={expenseType.expenseTypeId}>
+                                            {expenseType.icon} {expenseType.name}
+                                        </option>
+                                    ))}
                                 </select>
                             </div>
                         )}
@@ -327,8 +342,10 @@ export default function NewTransactionPage() {
                         </div>
                     </form>
                 </main>
-            </div>
-        </UserAuthComponent>
+        </div>
     );
 }
 
+export default function NewTransactionPage() {
+    return <NewTransactionForm />;
+}

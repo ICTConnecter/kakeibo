@@ -5,7 +5,6 @@
  * * name：カテゴリ名
  * * icon：アイコン名
  * * color：カラーコード
- * * isDefault：デフォルトカテゴリか
  * * order：表示順
  * * createdAt：作成日時
  */
@@ -18,7 +17,6 @@ export type Category = {
     name: string; // カテゴリ名
     icon: string; // アイコン名
     color: string; // カラーコード
-    isDefault: boolean; // デフォルトカテゴリか
     order: number; // 表示順
     createdAt: number;
 }

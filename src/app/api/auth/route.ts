@@ -17,7 +17,15 @@ export async function GET(req: NextRequest) {
     for (const householdId of user.householdIds) {
       const household = await getAdminDb().collection('households').doc(householdId).get();
       if (household.exists) {
-        households.push(household.data() as Household);
+        const data: Household = {
+          householdId: household.id,
+          name: household.data()?.name || '',
+          ownerId: household.data()?.ownerId || '',
+          members: household.data()?.members || [],
+          createdAt: household.data()?.createdAt || 0,
+          updatedAt: household.data()?.updatedAt || 0,
+        };
+        households.push(data);
       }
     }
 

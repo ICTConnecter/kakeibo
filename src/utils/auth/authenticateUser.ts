@@ -1,6 +1,6 @@
 import { getAdminDb } from '@/utils/firebase/admin';
 import { decodeIdToken } from '@/utils/line/decodeIdToken';
-import { User, Household } from '@/types/firestore';
+import { User } from '@/types/firestore';
 
 export type AuthenticatedUser = {
     userId: string;

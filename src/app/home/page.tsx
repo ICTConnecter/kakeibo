@@ -1,12 +1,15 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { LiffContext } from '@/components/context/liff';
-import { UserAuthComponent } from '@/components/context/user';
+import { UserAuthContext } from '@/components/context/user';
 import Link from 'next/link';
+import { HouseholdContext } from '@/components/context/household';
 
-export default function HomePage() {
-    const { decodeResult } = use(LiffContext);
+function HomeContent() {
+    const { decodeResult } = useContext(LiffContext);
+    const { userInfo } = useContext(UserAuthContext);
+    const { household, householdId, setHouseholdId, incomes, expenses } = useContext(HouseholdContext);
     const [summary, setSummary] = useState({
         income: 0,
         expense: 0,
@@ -15,23 +18,65 @@ export default function HomePage() {
     const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // 初回レンダリング時に最初のhouseholdを設定
     useEffect(() => {
-        // TODO: 実際のAPIからデータを取得
-        // 現在は仮データ
-        setSummary({
-            income: 250000,
-            expense: 180000,
-            balance: 70000,
+        if (userInfo?.households && userInfo.households.length > 0 && !householdId) {
+            setHouseholdId(userInfo.households[0].householdId);
+        }
+    }, [userInfo, householdId, setHouseholdId]);
+
+    // 収支サマリーの計算
+    useEffect(() => {
+        if (!householdId) {
+            setLoading(false);
+            return;
+        }
+
+        // 今月の収入と支出を計算
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+
+        const monthlyIncomes = incomes.filter(income => {
+            const incomeDate = new Date(income.date);
+            return incomeDate.getMonth() === currentMonth && incomeDate.getFullYear() === currentYear;
         });
-        
-        setRecentTransactions([
-            { id: '1', type: 'expense', name: 'スーパー', amount: 3580, date: new Date() },
-            { id: '2', type: 'income', name: '給与', amount: 250000, date: new Date() },
-            { id: '3', type: 'expense', name: 'レストラン', amount: 4500, date: new Date() },
-        ]);
-        
+
+        const monthlyExpenses = expenses.filter(expense => {
+            const expenseDate = new Date(expense.date);
+            return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+        });
+
+        const totalIncome = monthlyIncomes.reduce((sum, income) => sum + income.amount, 0);
+        const totalExpense = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+        setSummary({
+            income: totalIncome,
+            expense: totalExpense,
+            balance: totalIncome - totalExpense,
+        });
+
+        // 最近の取引（収入と支出を合わせて日付順にソート）
+        const allTransactions = [
+            ...monthlyIncomes.map(income => ({
+                id: `income-${income.incomeId}`,
+                type: 'income' as const,
+                name: income.source,
+                amount: income.amount,
+                date: new Date(income.date),
+            })),
+            ...monthlyExpenses.map(expense => ({
+                id: `expense-${expense.expenseId}`,
+                type: 'expense' as const,
+                name: expense.storeName,
+                amount: expense.amount,
+                date: new Date(expense.date),
+            })),
+        ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+
+        setRecentTransactions(allTransactions);
         setLoading(false);
-    }, []);
+    }, [householdId, incomes, expenses]);
 
     if (loading) {
         return (
@@ -42,11 +87,11 @@ export default function HomePage() {
     }
 
     return (
-        <UserAuthComponent>
-            <div className="min-h-screen bg-gray-50 pb-20">
-                {/* ヘッダー */}
-                <header className="bg-white shadow-sm p-4">
-                    <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gray-50 pb-20">
+            {/* ヘッダー */}
+            <header className="bg-white shadow-sm p-4">
+                <div className="max-w-7xl mx-auto space-y-3">
+                    <div className="flex items-center justify-between">
                         <h1 className="text-2xl font-bold text-gray-800">AI家計簿</h1>
                         <div className="flex items-center gap-2">
                             <span className="text-sm text-gray-600">{decodeResult?.name}</span>
@@ -59,7 +104,29 @@ export default function HomePage() {
                             )}
                         </div>
                     </div>
-                </header>
+                    
+                    {/* 家計簿選択 */}
+                    {userInfo?.households && userInfo.households.length > 0 && (
+                        <div className="flex items-center gap-2">
+                            <label htmlFor="household-select" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                                家計簿:
+                            </label>
+                            <select
+                                id="household-select"
+                                value={householdId || ''}
+                                onChange={(e) => setHouseholdId(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                            >
+                                {userInfo.households.map((h, index) => (
+                                    <option key={`household-${h.householdId}-${index}`} value={h.householdId}>
+                                        {h.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+                </div>
+            </header>
 
                 {/* メインコンテンツ */}
                 <main className="max-w-7xl mx-auto p-4 space-y-6">
@@ -97,31 +164,37 @@ export default function HomePage() {
                             </Link>
                         </div>
                         <div className="space-y-3">
-                            {recentTransactions.map((transaction) => (
-                                <div
-                                    key={transaction.id}
-                                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                            transaction.type === 'income' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
+                            {recentTransactions.length > 0 ? (
+                                recentTransactions.map((transaction) => (
+                                    <div
+                                        key={transaction.id}
+                                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                                transaction.type === 'income' ? 'bg-blue-100 text-blue-600' : 'bg-red-100 text-red-600'
+                                            }`}>
+                                                {transaction.type === 'income' ? '💰' : '💳'}
+                                            </div>
+                                            <div>
+                                                <p className="font-medium">{transaction.name}</p>
+                                                <p className="text-sm text-gray-500">
+                                                    {transaction.date.toLocaleDateString('ja-JP')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <p className={`font-bold ${
+                                            transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'
                                         }`}>
-                                            {transaction.type === 'income' ? '💰' : '💳'}
-                                        </div>
-                                        <div>
-                                            <p className="font-medium">{transaction.name}</p>
-                                            <p className="text-sm text-gray-500">
-                                                {transaction.date.toLocaleDateString('ja-JP')}
-                                            </p>
-                                        </div>
+                                            {transaction.type === 'income' ? '+' : '-'}¥{transaction.amount.toLocaleString()}
+                                        </p>
                                     </div>
-                                    <p className={`font-bold ${
-                                        transaction.type === 'income' ? 'text-blue-600' : 'text-red-600'
-                                    }`}>
-                                        {transaction.type === 'income' ? '+' : '-'}¥{transaction.amount.toLocaleString()}
-                                    </p>
-                                </div>
-                            ))}
+                                ))
+                            ) : (
+                                <p className="text-center text-gray-500 py-8">
+                                    今月の取引がありません
+                                </p>
+                            )}
                         </div>
                     </div>
                 </main>
@@ -165,8 +238,10 @@ export default function HomePage() {
                         </Link>
                     </div>
                 </nav>
-            </div>
-        </UserAuthComponent>
+        </div>
     );
 }
 
+export default function HomePage() {
+    return <HomeContent />;
+}

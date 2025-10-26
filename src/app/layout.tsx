@@ -1,5 +1,7 @@
+import { HouseholdComponent } from "@/components/context/household";
 import "./globals.css";
 import { LiffComponent } from "@/components/context/liff";
+import { UserAuthComponent } from "@/components/context/user";
 import { VConsoleLoader } from "@/components/VConsoleLoader";
 
 export default function RootLayout({
@@ -8,11 +10,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="ja">
+      <body suppressHydrationWarning>
         <VConsoleLoader />
         <LiffComponent>
-          {children}
+          <UserAuthComponent>
+            <HouseholdComponent>
+              {children}
+            </HouseholdComponent>
+          </UserAuthComponent>
         </LiffComponent>
       </body>
     </html>

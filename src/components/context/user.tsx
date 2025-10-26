@@ -69,7 +69,7 @@ export const UserAuthComponent = ({ children }: Props) => {
   return (
     <>
       <UserAuthContext.Provider
-        value={{ userInfo }}
+        value={{ userInfo, idToken }}
       >
         {userInfo ? children : null}
         {isError ? <>エラー</> : null}
@@ -93,5 +93,6 @@ export const UserAuthComponent = ({ children }: Props) => {
 //   typeof userContextType
 // >;
 export type UserContextType = {
-  userInfo: UserInfo | null
+  userInfo: UserInfo | null;
+  idToken: string | null;
 }
