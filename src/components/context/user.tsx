@@ -55,12 +55,13 @@ export const UserAuthComponent = ({ children }: Props) => {
             setIsError(true);
           }
         } else {
+
           window.location.href = '/register'
         }
       });
   };
   useEffect(() => {
-    if (!idToken) {
+    if (!idToken || window.location.pathname === '/register') {
       return;
     }
     auth(idToken);
@@ -71,7 +72,7 @@ export const UserAuthComponent = ({ children }: Props) => {
       <UserAuthContext.Provider
         value={{ userInfo, idToken }}
       >
-        {userInfo ? children : null}
+        {userInfo || window.location.pathname === '/register' ? children : null}
         {isError ? <>エラー</> : null}
         {!userInfo && !isError ? <>ローディング</> : null}
       </UserAuthContext.Provider>
