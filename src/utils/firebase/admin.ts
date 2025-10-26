@@ -19,6 +19,8 @@ export const getAdminApp = (): App => {
                 throw new Error('NEXT_PUBLIC_FIREBASE_PROJECT_ID is not set');
             }
 
+            const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+
             // サービスアカウントの認証情報がある場合
             if (clientEmail && privateKey) {
                 adminApp = initializeApp({
@@ -27,11 +29,13 @@ export const getAdminApp = (): App => {
                         clientEmail,
                         privateKey,
                     }),
+                    storageBucket,
                 });
             } else {
                 // デフォルト認証を使用（GCPにデプロイ時など）
                 adminApp = initializeApp({
                     projectId,
+                    storageBucket,
                 });
             }
         }

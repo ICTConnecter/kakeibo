@@ -24,7 +24,7 @@ export const analyzeReceipt = async (
 ): Promise<ReceiptAnalysisResult> => {
     try {
         const genAI = getGeminiClient();
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         const prompt = `
 あなたはレシート画像を解析するAIアシスタントです。
@@ -97,11 +97,32 @@ export const analyzeReceipt = async (
     }
 };
 
+// 利用可能なモデル一覧を取得（デバッグ用）
+export const listAvailableModels = async () => {
+    try {
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error('Gemini API key is not set');
+        }
+        const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models?key=' + apiKey);
+        if (!response.ok) {
+            throw new Error('Failed to fetch models');
+        }
+        const data = await response.json();
+        const models = data.models || [];
+        console.log('Available models:', models);
+        return models;
+    } catch (error) {
+        console.error('Failed to list models:', error);
+        return [];
+    }
+};
+
 // レシート画像の品質チェック
 export const checkReceiptQuality = async (imageBase64: string): Promise<boolean> => {
     try {
         const genAI = getGeminiClient();
-        const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
         const prompt = `
 この画像はレシートですか？また、レシートとして読み取り可能な品質ですか？

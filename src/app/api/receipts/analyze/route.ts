@@ -19,18 +19,18 @@ export async function POST(request: NextRequest) {
         // Base64形式の画像データから不要なプレフィックスを削除
         const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
-        // 画像品質チェック（オプション）
-        const isQualityGood = await checkReceiptQuality(base64Data);
-        
-        if (!isQualityGood) {
-            return NextResponse.json<ApiResponse>(
-                {
-                    success: false,
-                    error: 'レシート画像が不鮮明です。再度撮影してください。',
-                },
-                { status: 400 }
-            );
-        }
+        // 画像品質チェック（一時的にスキップ）
+        // const isQualityGood = await checkReceiptQuality(base64Data);
+        // 
+        // if (!isQualityGood) {
+        //     return NextResponse.json<ApiResponse>(
+        //         {
+        //             success: false,
+        //             error: 'レシート画像が不鮮明です。再度撮影してください。',
+        //         },
+        //         { status: 400 }
+        //     );
+        // }
 
         // レシート解析
         const result = await analyzeReceipt(base64Data);
