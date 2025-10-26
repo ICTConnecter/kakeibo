@@ -9,7 +9,7 @@ function ReceiptConfirmForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { userInfo } = useContext(UserAuthContext);
-    const { categories, wallets, expenseTypes, setHouseholdId, loading: householdLoading } = useContext(HouseholdContext);
+    const { categories, wallets, expenseTypes, setHouseholdId, loading: householdLoading, refetch } = useContext(HouseholdContext);
     
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -110,6 +110,9 @@ function ReceiptConfirmForm() {
             if (result.success) {
                 // 登録成功後、sessionStorageをクリア
                 sessionStorage.removeItem('receiptImageData');
+                
+                // データを再取得してからホーム画面に遷移
+                await refetch();
                 
                 alert('支出を登録しました！');
                 router.push('/home');
