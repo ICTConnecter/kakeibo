@@ -126,6 +126,7 @@ export const HouseholdComponent = ({ children }: Props) => {
 
       console.log("incomesData", incomesData);
       console.log("expensesData", expensesData);
+      console.log("expensesData.data", expensesData.data);
 
       // データをセット
       if (categoriesData.success && categoriesData.data) {

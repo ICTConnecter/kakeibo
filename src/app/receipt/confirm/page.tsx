@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useContext } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { UserAuthComponent } from '@/components/context/user';
+import { UserAuthComponent, UserAuthContext } from '@/components/context/user';
+import { HouseholdContext } from '@/components/context/household';
 
 function ReceiptConfirmForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { userInfo } = useContext(UserAuthContext);
+    const { categories, wallets, expenseTypes, setHouseholdId, loading: householdLoading } = useContext(HouseholdContext);
+    
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         storeName: '',
@@ -17,24 +21,58 @@ function ReceiptConfirmForm() {
         expenseTypeId: '',
         memo: '',
         items: [] as any[],
-        receiptImageUrl: '',
+        receiptImageData: '', // Base64画像データ
     });
+    
+    // ユーザー情報からhouseholdIdを設定
+    useEffect(() => {
+        if (userInfo?.households && userInfo.households.length > 0) {
+            setHouseholdId(userInfo.households[0].householdId);
+        }
+    }, [userInfo, setHouseholdId]);
 
     useEffect(() => {
         const dataParam = searchParams.get('data');
         if (dataParam) {
             try {
                 const parsedData = JSON.parse(dataParam);
+                
+                // sessionStorageから画像データを取得
+                const receiptImageData = sessionStorage.getItem('receiptImageData') || '';
+
+                // 日付をdatetime-local形式に変換（YYYY-MM-DDThh:mm）
+                let formattedDate = new Date().toISOString().slice(0, 16);
+                if (parsedData.date) {
+                    try {
+                        // ISO 8601形式やその他の形式から変換
+                        const dateObj = new Date(parsedData.date);
+                        if (!isNaN(dateObj.getTime())) {
+                            // ローカルタイムゾーンで表示
+                            const year = dateObj.getFullYear();
+                            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const day = String(dateObj.getDate()).padStart(2, '0');
+                            const hours = String(dateObj.getHours()).padStart(2, '0');
+                            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                            formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+                        }
+                    } catch (error) {
+                        console.error('日付の変換に失敗しました:', error);
+                    }
+                }
+                
+                console.log('取得した日付:', parsedData.date);
+                console.log('フォーム用に変換した日付:', formattedDate);
+                
                 setFormData({
                     storeName: parsedData.storeName || '',
-                    date: parsedData.date || new Date().toISOString().slice(0, 16),
+                    date: formattedDate,
                     amount: parsedData.totalAmount || 0,
                     categoryId: '',
                     walletId: '',
                     expenseTypeId: '',
                     memo: '',
                     items: parsedData.items || [],
-                    receiptImageUrl: parsedData.receiptImageUrl || '',
+                    receiptImageData, // sessionStorageから取得したBase64データ
                 });
             } catch (error) {
                 console.error('Failed to parse data:', error);
@@ -47,8 +85,13 @@ function ReceiptConfirmForm() {
         setLoading(true);
 
         try {
-            // TODO: 実際のhouseholdIdを取得
-            const householdId = 'temp-household-id';
+            // userInfoから実際のhouseholdIdを取得
+            const householdId = userInfo?.households?.[0]?.householdId;
+            
+            if (!householdId) {
+                alert('家計簿情報が見つかりません');
+                return;
+            }
 
             const response = await fetch('/api/expenses', {
                 method: 'POST',
@@ -58,12 +101,16 @@ function ReceiptConfirmForm() {
                 body: JSON.stringify({
                     householdId,
                     ...formData,
+                    expenseTypeId: formData.expenseTypeId || null,
                 }),
             });
 
             const result = await response.json();
 
             if (result.success) {
+                // 登録成功後、sessionStorageをクリア
+                sessionStorage.removeItem('receiptImageData');
+                
                 alert('支出を登録しました！');
                 router.push('/home');
             } else {
@@ -84,7 +131,10 @@ function ReceiptConfirmForm() {
                 <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
                     <div className="flex items-center justify-between max-w-7xl mx-auto">
                         <button
-                            onClick={() => router.back()}
+                            onClick={() => {
+                                sessionStorage.removeItem('receiptImageData');
+                                router.back();
+                            }}
                             className="text-gray-600 hover:text-gray-800"
                         >
                             ← 戻る
@@ -96,10 +146,10 @@ function ReceiptConfirmForm() {
 
                 <main className="max-w-3xl mx-auto p-4">
                     {/* レシート画像 */}
-                    {formData.receiptImageUrl && (
+                    {formData.receiptImageData && (
                         <div className="mb-6">
                             <img
-                                src={formData.receiptImageUrl}
+                                src={formData.receiptImageData}
                                 alt="レシート"
                                 className="w-full max-w-md mx-auto rounded-lg shadow"
                             />
@@ -156,10 +206,17 @@ function ReceiptConfirmForm() {
                                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                                 required
+                                disabled={householdLoading}
                             >
                                 <option value="">選択してください</option>
-                                <option value="food">食費</option>
-                                <option value="transport">交通費</option>
+                                {categories
+                                    .filter(cat => cat.type === 'expense')
+                                    .map(category => (
+                                        <option key={category.categoryId} value={category.categoryId}>
+                                            {category.icon} {category.name}
+                                        </option>
+                                    ))
+                                }
                             </select>
                         </div>
 
@@ -172,10 +229,34 @@ function ReceiptConfirmForm() {
                                 onChange={(e) => setFormData({ ...formData, walletId: e.target.value })}
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                                 required
+                                disabled={householdLoading}
                             >
                                 <option value="">選択してください</option>
-                                <option value="cash">現金</option>
-                                <option value="credit">クレジットカード</option>
+                                {wallets.map(wallet => (
+                                    <option key={wallet.walletId} value={wallet.walletId}>
+                                        {wallet.icon} {wallet.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* 支出タイプ（任意） */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                経費タイプ（任意）
+                            </label>
+                            <select
+                                value={formData.expenseTypeId}
+                                onChange={(e) => setFormData({ ...formData, expenseTypeId: e.target.value })}
+                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                disabled={householdLoading}
+                            >
+                                <option value="">なし</option>
+                                {expenseTypes.map(expenseType => (
+                                    <option key={expenseType.expenseTypeId} value={expenseType.expenseTypeId}>
+                                        {expenseType.icon} {expenseType.name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
@@ -194,7 +275,10 @@ function ReceiptConfirmForm() {
                         <div className="flex gap-4 pt-4">
                             <button
                                 type="button"
-                                onClick={() => router.back()}
+                                onClick={() => {
+                                    sessionStorage.removeItem('receiptImageData');
+                                    router.back();
+                                }}
                                 className="flex-1 py-3 px-6 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                                 disabled={loading}
                             >

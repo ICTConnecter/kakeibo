@@ -44,24 +44,12 @@ export default function ReceiptCameraPage() {
             const result = await response.json();
 
             if (result.success) {
-                // 画像をアップロード
-                const formData = new FormData();
-                const blob = await (await fetch(capturedImage)).blob();
-                formData.append('file', blob, 'receipt.jpg');
-
-                const uploadResponse = await fetch('/api/receipts/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
-
-                const uploadResult = await uploadResponse.json();
-
-                // 確認画面に遷移（解析結果と画像URLを渡す）
+                // 画像データはsessionStorageに保存（URLが長くなりすぎるのを防ぐ）
+                sessionStorage.setItem('receiptImageData', capturedImage);
+                
+                // 確認画面に遷移（解析結果のみURLで渡す）
                 const params = new URLSearchParams({
-                    data: JSON.stringify({
-                        ...result.data,
-                        receiptImageUrl: uploadResult.data.imageUrl,
-                    }),
+                    data: JSON.stringify(result.data),
                 });
                 router.push(`/receipt/confirm?${params.toString()}`);
             } else {

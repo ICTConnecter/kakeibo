@@ -37,6 +37,10 @@ function HomeContent() {
         const currentMonth = now.getMonth();
         const currentYear = now.getFullYear();
 
+        console.log("===== フィルタリング開始 =====");
+        console.log("現在の年月:", currentYear, currentMonth);
+        console.log("全支出データ:", expenses);
+
         const monthlyIncomes = incomes.filter(income => {
             const incomeDate = new Date(income.date);
             return incomeDate.getMonth() === currentMonth && incomeDate.getFullYear() === currentYear;
@@ -44,8 +48,15 @@ function HomeContent() {
 
         const monthlyExpenses = expenses.filter(expense => {
             const expenseDate = new Date(expense.date);
-            return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            const month = expenseDate.getMonth();
+            const year = expenseDate.getFullYear();
+            const isMatch = month === currentMonth && year === currentYear;
+            console.log(`支出: ${expense.storeName}, date: ${expense.date}, 変換後: ${expenseDate.toISOString()}, 年月: ${year}/${month}, マッチ: ${isMatch}`);
+            return isMatch;
         });
+
+        console.log("フィルタリング後の支出:", monthlyExpenses);
+        console.log("===== フィルタリング終了 =====");
 
         const totalIncome = monthlyIncomes.reduce((sum, income) => sum + income.amount, 0);
         const totalExpense = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);

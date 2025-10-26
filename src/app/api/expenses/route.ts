@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb } from '@/utils/firebase/admin';
 import { Expense } from '@/types/firestore';
 import { ApiResponse, CreateExpenseRequest, GetExpensesResponse, GetExpensesQuery } from '@/types/api';
+import { uploadReceiptImage } from '@/utils/storage/cloudStorage';
 
 // 支出一覧取得
 export async function GET(request: NextRequest) {
@@ -51,10 +52,9 @@ export async function GET(request: NextRequest) {
         query = query.orderBy('date', 'desc');
 
         // ページネーション
-        const limit = parseInt(searchParams.get('limit') || '50');
-        const offset = parseInt(searchParams.get('offset') || '0');
+        const limit = parseInt(searchParams.get('limit') || '100');
         
-        query = query.limit(limit).offset(offset);
+        query = query.limit(limit);
 
         const snapshot = await query.get();
         const expenses: Expense[] = [];
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
     try {
         const body: CreateExpenseRequest = await request.json();
         
-        const { householdId, amount, date, storeName, categoryId, walletId, expenseTypeId, items, memo, receiptImageUrl } = body;
+        const { householdId, amount, date, storeName, categoryId, walletId, expenseTypeId, items, memo, receiptImageUrl, receiptImageData } = body;
 
         // バリデーション
         if (!householdId || !amount || !date || !storeName || !categoryId || !walletId) {
@@ -103,6 +103,25 @@ export async function POST(request: NextRequest) {
         // TODO: 認証ユーザー情報を取得（現在は仮のユーザーID）
         const userId = 'temp-user-id';
 
+        // レシート画像のアップロード（Base64データがある場合）
+        let uploadedImageUrl = receiptImageUrl || '';
+        if (receiptImageData && !receiptImageUrl) {
+            try {
+                // Base64データからBufferに変換
+                const base64Data = receiptImageData.replace(/^data:image\/\w+;base64,/, '');
+                const buffer = Buffer.from(base64Data, 'base64');
+                
+                // ファイル名を生成
+                const fileName = `receipt-${Date.now()}.jpg`;
+                
+                // Storageにアップロード
+                uploadedImageUrl = await uploadReceiptImage(buffer, fileName, 'image/jpeg');
+            } catch (uploadError) {
+                console.error('Failed to upload receipt image during expense creation:', uploadError);
+                // アップロードに失敗しても支出登録は続行（画像なしで登録）
+            }
+        }
+
         const newExpense: Omit<Expense, 'expenseId'> = {
             userId,
             householdId,
@@ -114,7 +133,7 @@ export async function POST(request: NextRequest) {
             expenseTypeId: expenseTypeId || null,
             items: items || [],
             memo: memo || '',
-            receiptImageUrl: receiptImageUrl || '',
+            receiptImageUrl: uploadedImageUrl,
             createdAt: now,
             updatedAt: now,
             createdBy: userId,

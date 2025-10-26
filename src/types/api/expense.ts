@@ -12,7 +12,8 @@ export type CreateExpenseRequest = {
     expenseTypeId: string | null;
     items: ExpenseItem[];
     memo: string;
-    receiptImageUrl?: string;
+    receiptImageUrl?: string; // すでにアップロード済みの画像URL（後方互換性のため）
+    receiptImageData?: string; // Base64エンコードされた画像データ（新フロー）
 }
 
 // 支出更新用のリクエストボディ

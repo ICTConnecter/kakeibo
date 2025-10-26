@@ -46,10 +46,9 @@ export async function GET(request: NextRequest) {
         query = query.orderBy('date', 'desc');
 
         // ページネーション
-        const limit = parseInt(searchParams.get('limit') || '50');
-        const offset = parseInt(searchParams.get('offset') || '0');
+        const limit = parseInt(searchParams.get('limit') || '100');
         
-        query = query.limit(limit).offset(offset);
+        query = query.limit(limit);
 
         const snapshot = await query.get();
         const incomes: Income[] = [];
