@@ -1,35 +1,137 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { UserAuthComponent } from '@/components/context/user';
+import { useState, useEffect, useContext, useMemo } from 'react';
+import { UserAuthComponent, UserAuthContext } from '@/components/context/user';
+import { HouseholdContext } from '@/components/context/household';
 import Link from 'next/link';
+import { Expense } from '@/types/firestore/Expense';
+import { Income } from '@/types/firestore/Income';
 
 type TransactionType = 'all' | 'expense' | 'income';
 
+type Transaction = {
+    id: string;
+    type: 'expense' | 'income';
+    name: string;
+    category: string;
+    amount: number;
+    date: Date;
+};
+
 export default function TransactionsPage() {
+    const { idToken } = useContext(UserAuthContext);
+    const { householdId, categories } = useContext(HouseholdContext);
+    
     const [activeTab, setActiveTab] = useState<TransactionType>('all');
-    const [transactions, setTransactions] = useState<any[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
+    
+    // 現在の年月をデフォルトとする
+    const now = new Date();
+    const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+    const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
 
-    useEffect(() => {
-        // TODO: 実際のAPIからデータを取得
-        setSummary({
-            income: 250000,
-            expense: 180000,
-            balance: 70000,
-        });
-
-        setTransactions([
-            { id: '1', type: 'expense', name: 'スーパー', category: '食費', amount: 3580, date: new Date() },
-            { id: '2', type: 'income', name: '給与', category: '給与', amount: 250000, date: new Date() },
-            { id: '3', type: 'expense', name: 'レストラン', category: '食費', amount: 4500, date: new Date() },
-            { id: '4', type: 'expense', name: '電車', category: '交通費', amount: 340, date: new Date() },
-            { id: '5', type: 'income', name: '副業', category: '副業', amount: 15000, date: new Date() },
-        ]);
-
-        setLoading(false);
+    // 年の選択肢を生成（過去5年から未来1年まで）
+    const yearOptions = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let i = currentYear - 5; i <= currentYear + 1; i++) {
+            years.push(i);
+        }
+        return years;
     }, []);
+
+    // 月の選択肢
+    const monthOptions = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+    // 選択された年月に基づいて開始日と終了日を計算
+    const getDateRange = (year: number, month: number) => {
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+        return { startDate, endDate };
+    };
+
+    // APIからデータを取得
+    useEffect(() => {
+        const fetchData = async () => {
+            if (!householdId || !idToken) {
+                setLoading(false);
+                return;
+            }
+
+            setLoading(true);
+            try {
+                const { startDate, endDate } = getDateRange(selectedYear, selectedMonth);
+                
+                const headers = {
+                    'Authorization': `Bearer:${idToken}`,
+                    'Content-Type': 'application/json',
+                };
+
+                // 収入と支出を並列で取得
+                const [expensesRes, incomesRes] = await Promise.all([
+                    fetch(`/api/expenses?householdId=${householdId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, { headers }),
+                    fetch(`/api/incomes?householdId=${householdId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`, { headers }),
+                ]);
+
+                const expensesData = await expensesRes.json();
+                const incomesData = await incomesRes.json();
+
+                // データの変換
+                const expenseTransactions: Transaction[] = expensesData.success && expensesData.data?.expenses
+                    ? expensesData.data.expenses.map((expense: Expense) => {
+                        const category = categories.find(c => c.categoryId === expense.categoryId);
+                        return {
+                            id: expense.expenseId,
+                            type: 'expense' as const,
+                            name: expense.storeName,
+                            category: category?.name || '未分類',
+                            amount: expense.amount,
+                            date: new Date(expense.date),
+                        };
+                    })
+                    : [];
+
+                const incomeTransactions: Transaction[] = incomesData.success && incomesData.data?.incomes
+                    ? incomesData.data.incomes.map((income: Income) => {
+                        const category = categories.find(c => c.categoryId === income.categoryId);
+                        return {
+                            id: income.incomeId,
+                            type: 'income' as const,
+                            name: income.source,
+                            category: category?.name || '未分類',
+                            amount: income.amount,
+                            date: new Date(income.date),
+                        };
+                    })
+                    : [];
+
+                // 全ての取引を結合してソート
+                const allTransactions = [...expenseTransactions, ...incomeTransactions].sort(
+                    (a, b) => b.date.getTime() - a.date.getTime()
+                );
+
+                setTransactions(allTransactions);
+
+                // サマリーを計算
+                const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
+                const totalExpense = expenseTransactions.reduce((sum, t) => sum + t.amount, 0);
+                setSummary({
+                    income: totalIncome,
+                    expense: totalExpense,
+                    balance: totalIncome - totalExpense,
+                });
+
+            } catch (error) {
+                console.error('データ取得エラー:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [householdId, idToken, selectedYear, selectedMonth, categories]);
 
     const filteredTransactions = transactions.filter(t => {
         if (activeTab === 'all') return true;
@@ -53,6 +155,35 @@ export default function TransactionsPage() {
                 </header>
 
                 <main className="max-w-7xl mx-auto p-4 space-y-4">
+                    {/* 年月選択 */}
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <div className="flex items-center justify-center gap-3">
+                            <label className="text-sm text-gray-600">年月:</label>
+                            <select
+                                value={selectedYear}
+                                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                {yearOptions.map((year) => (
+                                    <option key={year} value={year}>
+                                        {year}年
+                                    </option>
+                                ))}
+                            </select>
+                            <select
+                                value={selectedMonth}
+                                onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                {monthOptions.map((month) => (
+                                    <option key={month} value={month}>
+                                        {month}月
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
                     {/* タブ */}
                     <div className="bg-white rounded-lg shadow p-1 flex gap-1">
                         <button
