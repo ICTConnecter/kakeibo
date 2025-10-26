@@ -7,7 +7,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '食費',
         icon: '🍽️',
         color: '#FF6B6B',
-        isDefault: true,
         order: 1,
     },
     {
@@ -15,7 +14,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '家賃',
         icon: '🏠',
         color: '#4ECDC4',
-        isDefault: true,
         order: 2,
     },
     {
@@ -23,7 +21,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '光熱費',
         icon: '💡',
         color: '#FFE66D',
-        isDefault: true,
         order: 3,
     },
     {
@@ -31,7 +28,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '交通費',
         icon: '🚗',
         color: '#95E1D3',
-        isDefault: true,
         order: 4,
     },
     {
@@ -39,7 +35,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '医療費',
         icon: '💊',
         color: '#F38181',
-        isDefault: true,
         order: 5,
     },
     {
@@ -47,7 +42,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '娯楽費',
         icon: '🎮',
         color: '#AA96DA',
-        isDefault: true,
         order: 6,
     },
     {
@@ -55,7 +49,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '衣服費',
         icon: '👔',
         color: '#FCBAD3',
-        isDefault: true,
         order: 7,
     },
     {
@@ -63,7 +56,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: '通信費',
         icon: '📱',
         color: '#A8D8EA',
-        isDefault: true,
         order: 8,
     },
     {
@@ -71,7 +63,6 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         name: 'その他',
         icon: '📦',
         color: '#D3D3D3',
-        isDefault: true,
         order: 9,
     },
 ];
@@ -83,7 +74,6 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         name: '給与',
         icon: '💰',
         color: '#6BCF7F',
-        isDefault: true,
         order: 1,
     },
     {
@@ -91,7 +81,6 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         name: 'ボーナス',
         icon: '💎',
         color: '#4A90E2',
-        isDefault: true,
         order: 2,
     },
     {
@@ -99,7 +88,6 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         name: '副業',
         icon: '💼',
         color: '#F5A623',
-        isDefault: true,
         order: 3,
     },
     {
@@ -107,7 +95,6 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         name: '投資・配当',
         icon: '📈',
         color: '#7ED321',
-        isDefault: true,
         order: 4,
     },
     {
@@ -115,7 +102,6 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         name: 'お小遣い',
         icon: '🎁',
         color: '#FFB6C1',
-        isDefault: true,
         order: 5,
     },
     {
@@ -123,7 +109,6 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         name: 'その他収入',
         icon: '💵',
         color: '#B8E986',
-        isDefault: true,
         order: 6,
     },
 ];

@@ -83,7 +83,6 @@ export async function POST(request: NextRequest) {
             name,
             icon,
             color,
-            isDefault: false,
             order: maxOrder + 1,
             createdAt: Date.now(),
         };

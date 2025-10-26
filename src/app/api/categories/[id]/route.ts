@@ -79,14 +79,6 @@ export async function DELETE(
 
         const category = doc.data() as Category;
 
-        // デフォルトカテゴリは削除不可
-        if (category.isDefault) {
-            return NextResponse.json<ApiResponse>(
-                { success: false, error: 'デフォルトカテゴリは削除できません' },
-                { status: 400 }
-            );
-        }
-
         await docRef.delete();
 
         return NextResponse.json<ApiResponse>(

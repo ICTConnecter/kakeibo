@@ -211,7 +211,6 @@ categories/{categoryId}
   - name: string (カテゴリ名)
   - icon: string (アイコン名)
   - color: string (カラーコード)
-  - isDefault: boolean (デフォルトカテゴリか)
   - order: number (表示順)
   - createdAt: timestamp
 ```
