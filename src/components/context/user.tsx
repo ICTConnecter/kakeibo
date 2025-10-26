@@ -55,12 +55,16 @@ export const UserAuthComponent = ({ children }: Props) => {
             setIsError(true);
           }
         } else {
-
-          window.location.href = '/register'
+          if (typeof window !== 'undefined') {
+            window.location.href = '/register'
+          }
         }
       });
   };
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
     if (!idToken || window.location.pathname === '/register') {
       return;
     }
@@ -72,7 +76,7 @@ export const UserAuthComponent = ({ children }: Props) => {
       <UserAuthContext.Provider
         value={{ userInfo, idToken }}
       >
-        {userInfo || window.location.pathname === '/register' ? children : null}
+        {userInfo || (typeof window !== 'undefined' && window.location.pathname === '/register') ? children : null}
         {isError ? <>エラー</> : null}
         {!userInfo && !isError ? <>ローディング</> : null}
       </UserAuthContext.Provider>
