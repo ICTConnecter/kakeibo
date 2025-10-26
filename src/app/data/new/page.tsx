@@ -10,7 +10,7 @@ type TransactionType = 'income' | 'expense';
 function NewTransactionForm() {
     const router = useRouter();
     const { userInfo } = useContext(UserAuthContext);
-    const { categories, wallets, expenseTypes, setHouseholdId, loading: householdLoading } = useContext(HouseholdContext);
+    const { categories, wallets, expenseTypes, setHouseholdId, loading: householdLoading, refetch } = useContext(HouseholdContext);
     
     const [loading, setLoading] = useState(false);
     const [transactionType, setTransactionType] = useState<TransactionType>('income');
@@ -88,6 +88,8 @@ function NewTransactionForm() {
 
             if (result.success) {
                 const message = transactionType === 'income' ? '収入を登録しました！' : '支出を登録しました！';
+                // 最新のデータを取得してから遷移
+                await refetch();
                 alert(message);
                 router.push('/home');
             } else {

@@ -14,6 +14,9 @@ import { ExpenseType } from "@/types/firestore/ExpenseType";
 import { Income } from "@/types/firestore/Income";
 import { Expense } from "@/types/firestore/Expense";
 import { UserAuthContext, UserContextType } from "./user";
+import { GetCategoriesResponse } from "@/app/api/categories/type";
+import { GetExpenseTypesResponse } from "@/app/api/expense-types/type";
+import { GetWalletsResponse } from "@/app/api/wallets/type";
 
 type Props = {
   children: ReactNode | null;
@@ -33,7 +36,7 @@ export type HouseholdContextType = {
   setHouseholdId: (id: string | null) => void;
   loading: boolean;
   error: string | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 /**
@@ -60,7 +63,6 @@ export const HouseholdComponent = ({ children }: Props) => {
 
   // householdIdが変更されたときにデータを取得
   const fetchHouseholdData = useCallback(async (id: string) => {
-    console.log("fetchHouseholdに関する情報の取得を開始しました。householdId:", id);
     if (!idToken && process.env.NEXT_PUBLIC_MODE!== "test") return;
 
     setLoading(true);
@@ -115,28 +117,35 @@ export const HouseholdComponent = ({ children }: Props) => {
         incomesData,
         expensesData,
       ] = await Promise.all([
-        categoriesRes.json(),
-        walletsRes.json(),
-        expenseTypesRes.json(),
+        categoriesRes.json() as Promise<GetCategoriesResponse>,
+        walletsRes.json() as Promise<GetWalletsResponse>,
+        expenseTypesRes.json() as Promise<GetExpenseTypesResponse>,
         incomesRes.json(),
         expensesRes.json(),
       ]);
 
+      console.log("incomesData", incomesData);
+      console.log("expensesData", expensesData);
+
       // データをセット
-      if (categoriesData.success && categoriesData.categories) {
-        setCategories(categoriesData.categories);
+      if (categoriesData.success && categoriesData.data) {
+        setCategories(categoriesData.data);
       }
-      if (walletsData.success && walletsData.wallets) {
-        setWallets(walletsData.wallets);
+      if (walletsData.success && walletsData.data) {
+        setWallets(walletsData.data);
       }
-      if (expenseTypesData.success && expenseTypesData.expenseTypes) {
-        setExpenseTypes(expenseTypesData.expenseTypes);
+      if (expenseTypesData.success && expenseTypesData.data) {
+        setExpenseTypes(expenseTypesData.data);
       }
-      if (incomesData.success && incomesData.incomes) {
-        setIncomes(incomesData.incomes);
+      if (incomesData.success && incomesData.data.incomes) {
+        console.log("incomesDataが変更されました。↓");
+        console.log(JSON.stringify(incomesData.data.incomes));
+        setIncomes(incomesData.data.incomes);
       }
-      if (expensesData.success && expensesData.expenses) {
-        setExpenses(expensesData.expenses);
+      if (expensesData.success && expensesData.data.expenses) {
+        console.log("expensesDataが変更されました。↓");
+        console.log(JSON.stringify(expensesData.data.expenses));
+        setExpenses(expensesData.data.expenses);
       }
 
       // household情報を仮設定（実際のAPIから取得する場合は調整してください）
@@ -158,8 +167,6 @@ export const HouseholdComponent = ({ children }: Props) => {
   }, [idToken, userInfo]);
 
   useEffect(() => {
-    console.log("userInfoが変更されました。↓");
-    console.log(JSON.stringify(userInfo));
     if(!householdId) {
       setHouseholdId(userInfo?.households?.[0]?.householdId || null);
     }
@@ -167,7 +174,6 @@ export const HouseholdComponent = ({ children }: Props) => {
 
   // householdIdが変更されたときに実行
   useEffect(() => {
-    console.log("householdComponentが読み込まれました。householdId:", householdId);
     if ((householdId && idToken) || (householdId && process.env.NEXT_PUBLIC_MODE === "test")) {
       fetchHouseholdData(householdId);
     } else {
@@ -182,9 +188,9 @@ export const HouseholdComponent = ({ children }: Props) => {
   }, [householdId, idToken, fetchHouseholdData]);
 
   // 再取得用の関数
-  const refetch = () => {
+  const refetch = async () => {
     if (householdId) {
-      fetchHouseholdData(householdId);
+      await fetchHouseholdData(householdId);
     }
   };
 
