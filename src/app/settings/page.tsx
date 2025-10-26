@@ -24,6 +24,9 @@ export default function SettingsPage() {
                 </header>
 
                 <main className="max-w-7xl mx-auto p-4 space-y-6">
+                <div className="bg-white rounded-lg shadow p-4 text-center text-lg font-bold">
+                        開発中
+                    </div>
                     {/* プロフィール */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <div className="flex items-center gap-4">

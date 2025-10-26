@@ -28,6 +28,9 @@ export default function ReportsPage() {
                 </header>
 
                 <main className="max-w-7xl mx-auto p-4 space-y-6">
+                    <div className="bg-white rounded-lg shadow p-4 text-center text-lg font-bold">
+                        開発中
+                    </div>
                     {/* 期間選択 */}
                     <div className="bg-white rounded-lg shadow p-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
