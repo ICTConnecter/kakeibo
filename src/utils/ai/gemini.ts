@@ -100,7 +100,7 @@ export const analyzeReceipt = async (
 // 利用可能なモデル一覧を取得（デバッグ用）
 export const listAvailableModels = async () => {
     try {
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        const apiKey = process.env.GOOGLE_AI_API_KEY;
         if (!apiKey) {
             throw new Error('Gemini API key is not set');
         }

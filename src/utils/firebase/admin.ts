@@ -11,15 +11,15 @@ export const getAdminApp = (): App => {
         if (apps.length > 0) {
             adminApp = apps[0];
         } else {
-            const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+            const projectId = process.env.FIREBASE_PROJECT_ID;
             const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
             const privateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
             if (!projectId) {
-                throw new Error('NEXT_PUBLIC_FIREBASE_PROJECT_ID is not set');
+                throw new Error('FIREBASE_PROJECT_ID is not set');
             }
 
-            const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+            const storageBucket = process.env.FIREBASE_STORAGE_BUCKET;
 
             // サービスアカウントの認証情報がある場合
             if (clientEmail && privateKey) {
