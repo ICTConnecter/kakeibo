@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if not exist \"C:\\Users\\clown\\OneDrive\\ドキュメント\\code\\kakeibo\\src\\app\\api\\categories\\[id]\" mkdir \"C:\\Users\\clown\\OneDrive\\ドキュメント\\code\\kakeibo\\src\\app\\api\\categories\\[id]\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
