@@ -177,8 +177,9 @@ function HomeContent() {
                         <div className="space-y-3">
                             {recentTransactions.length > 0 ? (
                                 recentTransactions.map((transaction) => (
-                                    <div
+                                    <Link
                                         key={transaction.id}
+                                        href={`/transactions/${transaction.type}-${transaction.id.replace(/^(income|expense)-/, '')}`}
                                         className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
                                     >
                                         <div className="flex items-center gap-3">
@@ -199,7 +200,7 @@ function HomeContent() {
                                         }`}>
                                             {transaction.type === 'income' ? '+' : '-'}¥{transaction.amount.toLocaleString()}
                                         </p>
-                                    </div>
+                                    </Link>
                                 ))
                             ) : (
                                 <p className="text-center text-gray-500 py-8">

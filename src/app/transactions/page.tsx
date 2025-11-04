@@ -241,7 +241,7 @@ export default function TransactionsPage() {
                         {filteredTransactions.map((transaction) => (
                             <Link
                                 key={transaction.id}
-                                href={`/${transaction.type === 'expense' ? 'expenses' : 'incomes'}/${transaction.id}`}
+                                href={`/transactions/${transaction.type}-${transaction.id}`}
                                 className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition"
                             >
                                 <div className="flex items-center justify-between">
