@@ -164,7 +164,7 @@ expenses/{expenseId}
     - price: number
     - quantity: number
   - memo: string
-  - receiptImageUrl: string (Firebase Storage URL)
+  - receiptImageUrl: string[] (Firebase Storage URL)・・・リファクタでstring→string[]に変更
   - createdAt: timestamp
   - updatedAt: timestamp
   - createdBy: string (作成者ユーザーID)
@@ -214,6 +214,7 @@ categories/{categoryId}
   - color: string (カラーコード)
   - order: number (表示順)
   - createdAt: timestamp
+  - status: string ("active" | "deleted")・・・リファクタで追加
 ```
 
 #### wallets コレクション
@@ -227,6 +228,7 @@ wallets/{walletId}
   - isDefault: boolean (デフォルトウォレットか)
   - order: number (表示順)
   - createdAt: timestamp
+  - status: string ("active" | "deleted")・・・リファクタで追加
 ```
 
 #### expenseTypes コレクション（経費タイプ）
@@ -240,6 +242,7 @@ expenseTypes/{expenseTypeId}
   - isDefault: boolean (デフォルト経費タイプか)
   - order: number (表示順)
   - createdAt: timestamp
+  - status: string ("active" | "deleted")・・・リファクタで追加
 ```
 
 ---
