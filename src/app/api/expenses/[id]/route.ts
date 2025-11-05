@@ -143,9 +143,13 @@ export async function DELETE(
 
         // レシート画像を削除（複数画像対応）
         if (expense.receiptImageUrl && expense.receiptImageUrl.length > 0) {
+            console.log(`Deleting ${expense.receiptImageUrl.length} receipt images for expense ${id}`);
             for (const imageUrl of expense.receiptImageUrl) {
+                console.log('Deleting image URL:', imageUrl);
                 await deleteReceiptImage(imageUrl);
             }
+        } else {
+            console.log('No receipt images to delete for expense', id);
         }
 
         // Firestoreから削除

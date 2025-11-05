@@ -38,20 +38,35 @@ export const uploadReceiptImage = async (
 // 画像の削除
 export const deleteReceiptImage = async (imageUrl: string): Promise<void> => {
     try {
+        console.log('Deleting receipt image:', imageUrl);
+
         const adminApp = getAdminApp();
         const bucket = getStorage(adminApp).bucket();
 
         // URLからファイルパスを抽出
+        // URL形式: https://storage.googleapis.com/{bucket-name}/{filePath}
         const urlObj = new URL(imageUrl);
-        const pathMatch = urlObj.pathname.match(/\/([^\/]+\/[^\/\?]+)/);
-        
-        if (pathMatch && pathMatch[1]) {
-            const filePath = decodeURIComponent(pathMatch[1]);
+        console.log('URL pathname:', urlObj.pathname);
+
+        // パス名から最初のスラッシュとバケット名を除去してファイルパスを取得
+        // 例: /bucket-name/receipts/123456-image.jpg -> receipts/123456-image.jpg
+        const pathParts = urlObj.pathname.split('/').filter(part => part !== '');
+        console.log('Path parts:', pathParts);
+
+        if (pathParts.length >= 2) {
+            // 最初の要素（バケット名）を除いて、残りをファイルパスとする
+            const filePath = decodeURIComponent(pathParts.slice(1).join('/'));
+            console.log('Extracted file path:', filePath);
+
             const fileRef = bucket.file(filePath);
             await fileRef.delete();
+            console.log('Successfully deleted:', filePath);
+        } else {
+            console.error('Invalid URL format, could not extract file path:', imageUrl);
         }
     } catch (error) {
         console.error('Failed to delete receipt image:', error);
+        console.error('Image URL:', imageUrl);
         // エラーは無視して続行（画像が既に削除されている可能性がある）
     }
 };
