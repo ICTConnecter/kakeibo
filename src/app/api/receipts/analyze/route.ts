@@ -4,10 +4,10 @@ import { ApiResponse, ReceiptAnalysisResult } from '@/types/api';
 
 export async function POST(request: NextRequest) {
     try {
-        const { image, images } = await request.json();
+        const { images } = await request.json();
 
-        // 単一画像または複数画像のいずれかが必要
-        if (!image && (!images || images.length === 0)) {
+        // 画像データが必要
+        if (!images || images.length === 0) {
             return NextResponse.json<ApiResponse>(
                 {
                     success: false,
@@ -17,21 +17,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        let result: ReceiptAnalysisResult;
+        // Base64データから不要なプレフィックスを削除
+        const base64DataArray = images.map((img: string) =>
+            img.replace(/^data:image\/\w+;base64,/, '')
+        );
 
-        if (images && images.length > 0) {
-            // 複数画像の場合
-            const base64DataArray = images.map((img: string) =>
-                img.replace(/^data:image\/\w+;base64,/, '')
-            );
-
-            // 複数画像を解析（1つのレシートとして扱う）
-            result = await analyzeMultipleReceiptImages(base64DataArray);
-        } else {
-            // 単一画像の場合（後方互換性）
-            const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-            result = await analyzeReceipt(base64Data);
-        }
+        // 複数画像を解析（1枚でも複数でも同じ処理）
+        const result = images.length === 1
+            ? await analyzeReceipt(base64DataArray[0])
+            : await analyzeMultipleReceiptImages(base64DataArray);
 
         return NextResponse.json<ApiResponse<ReceiptAnalysisResult>>(
             {
