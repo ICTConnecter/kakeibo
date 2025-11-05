@@ -97,6 +97,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Validate items total matches amount if items are provided
+        if (items && items.length > 0) {
+            const itemsTotal = items.reduce((sum: number, item: { price: number; quantity: number }) => sum + (item.price * item.quantity), 0);
+            if (itemsTotal !== amount) {
+                return NextResponse.json<ApiResponse>(
+                    { success: false, error: `金額の不一致: 合計金額 (¥${amount}) が商品明細の合計 (¥${itemsTotal}) と一致しません` },
+                    { status: 400 }
+                );
+            }
+        }
+
         const db = getAdminDb();
         const now = Date.now();
         

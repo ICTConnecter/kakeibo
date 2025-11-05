@@ -48,7 +48,7 @@ export async function PUT(
     try {
         const { id } = await params;
         const body: UpdateExpenseRequest = await request.json();
-        
+
         const db = getAdminDb();
         const docRef = db.collection('expenses').doc(id);
         const doc = await docRef.get();
@@ -58,6 +58,17 @@ export async function PUT(
                 { success: false, error: '支出が見つかりません' },
                 { status: 404 }
             );
+        }
+
+        // Validate items total matches amount if items are provided
+        if (body.items && body.items.length > 0 && body.amount !== undefined) {
+            const itemsTotal = body.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (itemsTotal !== body.amount) {
+                return NextResponse.json<ApiResponse>(
+                    { success: false, error: `金額の不一致: 合計金額 (¥${body.amount}) が商品明細の合計 (¥${itemsTotal}) と一致しません` },
+                    { status: 400 }
+                );
+            }
         }
 
         // TODO: 認証ユーザー情報を取得

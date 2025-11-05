@@ -127,6 +127,15 @@ function TransactionDetailForm() {
         e.preventDefault();
         if (!transaction || !transactionType) return;
 
+        // Validate items total matches amount for expenses
+        if (transactionType === 'expense' && formData.items.length > 0) {
+            const itemsTotal = formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (itemsTotal !== formData.amount) {
+                alert(`Error: Amount (¥${formData.amount.toLocaleString()}) does not match Item Details total (¥${itemsTotal.toLocaleString()}). Please correct the values.`);
+                return;
+            }
+        }
+
         setSaving(true);
         try {
             const apiId = transactionType === 'expense'
@@ -429,6 +438,82 @@ function TransactionDetailForm() {
                                     rows={3}
                                 />
                             </div>
+
+                            {isExpense && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Item Details (Optional)
+                                    </label>
+                                    <div className="space-y-3">
+                                        {formData.items.map((item, index) => (
+                                            <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                                                <div className="flex-1 space-y-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Item name"
+                                                        value={item.name}
+                                                        onChange={(e) => {
+                                                            const newItems = [...formData.items];
+                                                            newItems[index] = { ...newItems[index], name: e.target.value };
+                                                            setFormData({ ...formData, items: newItems });
+                                                        }}
+                                                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Price"
+                                                            value={item.price}
+                                                            onChange={(e) => {
+                                                                const newItems = [...formData.items];
+                                                                newItems[index] = { ...newItems[index], price: Number(e.target.value) };
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                            className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                        <input
+                                                            type="number"
+                                                            placeholder="Qty"
+                                                            value={item.quantity}
+                                                            onChange={(e) => {
+                                                                const newItems = [...formData.items];
+                                                                newItems[index] = { ...newItems[index], quantity: Number(e.target.value) };
+                                                                setFormData({ ...formData, items: newItems });
+                                                            }}
+                                                            className="w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                        />
+                                                        <div className="px-3 py-2 bg-white border rounded-lg text-sm font-medium whitespace-nowrap">
+                                                            ¥{(item.price * item.quantity).toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const newItems = formData.items.filter((_, i) => i !== index);
+                                                        setFormData({ ...formData, items: newItems });
+                                                    }}
+                                                    className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData({
+                                                    ...formData,
+                                                    items: [...formData.items, { name: '', price: 0, quantity: 1 }]
+                                                });
+                                            }}
+                                            className="w-full py-2 px-4 border border-dashed border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50"
+                                        >
+                                            + Add Item
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="flex gap-4 pt-4">
                                 <button
