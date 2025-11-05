@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { UserAuthComponent, UserAuthContext } from '@/components/context/user';
 import { HouseholdContext } from '@/components/context/household';
 import Link from 'next/link';
@@ -21,6 +21,41 @@ export default function WalletsPage() {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [showDeleted, setShowDeleted] = useState(false);
+    const [allWallets, setAllWallets] = useState<Wallet[]>([]);
+
+    // 削除済みを含めたウォレットを取得
+    const fetchAllWallets = async () => {
+        if (!householdId || !showDeleted) {
+            setAllWallets([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/wallets?householdId=${householdId}&includeDeleted=true`, {
+                headers: {
+                    'Authorization': `Bearer:${idToken}`,
+                },
+            });
+
+            const result = await response.json();
+            if (result.success && result.data) {
+                setAllWallets(result.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch all wallets:', err);
+        }
+    };
+
+    // showDeletedが変更されたときにデータを取得
+    useEffect(() => {
+        if (showDeleted) {
+            fetchAllWallets();
+        }
+    }, [showDeleted, householdId, idToken]);
+
+    // 表示するウォレット
+    const displayWallets = showDeleted ? allWallets : wallets;
 
     // モーダルを開く
     const openAddModal = () => {
@@ -86,6 +121,9 @@ export default function WalletsPage() {
             }
 
             await refetch();
+            if (showDeleted) {
+                await fetchAllWallets();
+            }
             closeModal();
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -126,6 +164,9 @@ export default function WalletsPage() {
             }
 
             await refetch();
+            if (showDeleted) {
+                await fetchAllWallets();
+            }
             closeModal();
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -157,6 +198,9 @@ export default function WalletsPage() {
             }
 
             await refetch();
+            if (showDeleted) {
+                await fetchAllWallets();
+            }
             closeModal();
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -177,6 +221,19 @@ export default function WalletsPage() {
                 </header>
 
                 <main className="max-w-7xl mx-auto p-4 space-y-4">
+                    {/* 削除済み表示トグル */}
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={showDeleted}
+                                onChange={(e) => setShowDeleted(e.target.checked)}
+                                className="w-4 h-4 text-blue-600"
+                            />
+                            <span className="text-sm text-gray-700">削除済みアイテムを表示</span>
+                        </label>
+                    </div>
+
                     {/* エラー表示 */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -197,55 +254,77 @@ export default function WalletsPage() {
                         <div className="bg-white rounded-lg shadow overflow-hidden">
                             <h2 className="px-6 py-4 font-semibold border-b">ウォレット一覧</h2>
                             <div className="divide-y">
-                                {wallets.length === 0 ? (
+                                {displayWallets.length === 0 ? (
                                     <div className="px-6 py-8 text-center text-gray-500">
                                         ウォレットがありません
                                     </div>
                                 ) : (
-                                    wallets
-                                        .sort((a, b) => a.order - b.order)
-                                        .map((wallet) => (
-                                            <div
-                                                key={wallet.walletId}
-                                                className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <span
-                                                        className="text-2xl w-10 h-10 rounded-full flex items-center justify-center"
-                                                        style={{ backgroundColor: `${wallet.color}20` }}
-                                                    >
-                                                        {wallet.icon}
-                                                    </span>
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="font-medium">{wallet.name}</p>
-                                                            {wallet.isDefault && (
-                                                                <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
-                                                                    デフォルト
-                                                                </span>
-                                                            )}
+                                    displayWallets
+                                        .sort((a, b) => {
+                                            // 削除済みを下に表示
+                                            if (a.status === 'deleted' && b.status !== 'deleted') return 1;
+                                            if (a.status !== 'deleted' && b.status === 'deleted') return -1;
+                                            // 同じステータスの場合はorderでソート
+                                            return a.order - b.order;
+                                        })
+                                        .map((wallet) => {
+                                            const isDeleted = wallet.status === 'deleted';
+                                            return (
+                                                <div
+                                                    key={wallet.walletId}
+                                                    className={`flex items-center justify-between px-6 py-4 hover:bg-gray-50 ${
+                                                        isDeleted ? 'opacity-50 bg-gray-50' : ''
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span
+                                                            className="text-2xl w-10 h-10 rounded-full flex items-center justify-center"
+                                                            style={{ backgroundColor: `${wallet.color}20` }}
+                                                        >
+                                                            {wallet.icon}
+                                                        </span>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className={`font-medium ${isDeleted ? 'line-through' : ''}`}>
+                                                                    {wallet.name}
+                                                                </p>
+                                                                {wallet.isDefault && (
+                                                                    <span className="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">
+                                                                        デフォルト
+                                                                    </span>
+                                                                )}
+                                                                {isDeleted && (
+                                                                    <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">
+                                                                        削除済み
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-500">
+                                                                順序: {wallet.order}
+                                                            </p>
                                                         </div>
-                                                        <p className="text-sm text-gray-500">
-                                                            順序: {wallet.order}
-                                                        </p>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {!isDeleted && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => openEditModal(wallet)}
+                                                                    className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                                                                >
+                                                                    編集
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openDeleteModal(wallet)}
+                                                                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+                                                                >
+                                                                    削除
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => openEditModal(wallet)}
-                                                        className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                                                    >
-                                                        編集
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteModal(wallet)}
-                                                        className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
-                                                    >
-                                                        削除
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                 )}
                             </div>
                         </div>

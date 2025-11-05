@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const householdId = searchParams.get('householdId');
+        const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
         if (!householdId) {
             return NextResponse.json<ApiResponse>(
@@ -17,8 +18,15 @@ export async function GET(request: NextRequest) {
         }
 
         const db = getAdminDb();
-        const snapshot = await db.collection('wallets')
-            .where('householdId', '==', householdId)
+        let query = db.collection('wallets')
+            .where('householdId', '==', householdId);
+
+        // 削除済みを含めるかどうか
+        if (!includeDeleted) {
+            query = query.where('status', '==', 'active');
+        }
+
+        const snapshot = await query
             .orderBy('order', 'asc')
             .get();
 
@@ -54,7 +62,7 @@ export async function POST(request: NextRequest) {
         }
 
         const db = getAdminDb();
-        
+
         // 最大orderを取得
         const snapshot = await db.collection('wallets')
             .where('householdId', '==', householdId)

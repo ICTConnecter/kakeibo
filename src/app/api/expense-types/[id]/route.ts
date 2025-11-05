@@ -58,7 +58,7 @@ export async function PUT(
     }
 }
 
-// 経費タイプ削除
+// 経費タイプ削除（論理削除）
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -76,16 +76,8 @@ export async function DELETE(
             );
         }
 
-        const expenseType = doc.data() as ExpenseType;
-
-        if (expenseType.isDefault) {
-            return NextResponse.json<ApiResponse>(
-                { success: false, error: 'デフォルト経費タイプは削除できません' },
-                { status: 400 }
-            );
-        }
-
-        await docRef.delete();
+        // 論理削除: statusを'deleted'に変更
+        await docRef.update({ status: 'deleted' });
 
         return NextResponse.json<ApiResponse>(
             {

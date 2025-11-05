@@ -59,7 +59,7 @@ export async function PUT(
     }
 }
 
-// カテゴリ削除
+// カテゴリ削除（論理削除）
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -79,7 +79,8 @@ export async function DELETE(
 
         const category = doc.data() as Category;
 
-        await docRef.delete();
+        // 論理削除: statusを'deleted'に変更
+        await docRef.update({ status: 'deleted' });
 
         return NextResponse.json<ApiResponse>(
             {

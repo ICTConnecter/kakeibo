@@ -77,19 +77,19 @@ export const HouseholdComponent = ({ children }: Props) => {
         incomesRes,
         expensesRes,
       ] = await Promise.all([
-        fetch(`/api/categories?householdId=${id}`, {
+        fetch(`/api/categories?householdId=${id}&includeDeleted=true`, {
+          headers: {
+            'Authorization': `Bearer:${idToken || process.env.NEXT_PUBLIC_MODE}`,
+            'Content-Type': 'application/json',
+          },  
+        }),
+        fetch(`/api/wallets?householdId=${id}&includeDeleted=true`, {
           headers: {
             'Authorization': `Bearer:${idToken || process.env.NEXT_PUBLIC_MODE}`,
             'Content-Type': 'application/json',
           },
         }),
-        fetch(`/api/wallets?householdId=${id}`, {
-          headers: {
-            'Authorization': `Bearer:${idToken || process.env.NEXT_PUBLIC_MODE}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`/api/expense-types?householdId=${id}`, {
+        fetch(`/api/expense-types?householdId=${id}&includeDeleted=true`, {
           headers: {
             'Authorization': `Bearer:${idToken || process.env.NEXT_PUBLIC_MODE}`,
             'Content-Type': 'application/json',

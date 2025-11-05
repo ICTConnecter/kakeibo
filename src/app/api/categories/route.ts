@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const householdId = searchParams.get('householdId');
         const type = searchParams.get('type') as CategoryType | null;
+        const includeDeleted = searchParams.get('includeDeleted') === 'true';
 
         if (!householdId) {
             return NextResponse.json<ApiResponse>(
@@ -20,6 +21,11 @@ export async function GET(request: NextRequest) {
         const db = getAdminDb();
         let query = db.collection('categories')
             .where('householdId', '==', householdId);
+
+        // 削除済みを含めるかどうか
+        if (!includeDeleted) {
+            query = query.where('status', '==', 'active');
+        }
 
         // タイプフィルタ
         if (type) {
@@ -63,7 +69,7 @@ export async function POST(request: NextRequest) {
         }
 
         const db = getAdminDb();
-        
+
         // 最大orderを取得
         const snapshot = await db.collection('categories')
             .where('householdId', '==', householdId)

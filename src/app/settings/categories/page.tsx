@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { UserAuthComponent, UserAuthContext } from '@/components/context/user';
 import { HouseholdContext } from '@/components/context/household';
 import Link from 'next/link';
@@ -21,9 +21,42 @@ export default function CategoriesPage() {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [showDeleted, setShowDeleted] = useState(false);
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
+
+    // 削除済みを含めたカテゴリを取得
+    const fetchAllCategories = async () => {
+        if (!householdId || !showDeleted) {
+            setAllCategories([]);
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/categories?householdId=${householdId}&includeDeleted=true`, {
+                headers: {
+                    'Authorization': `Bearer:${idToken}`,
+                },
+            });
+
+            const result = await response.json();
+            if (result.success && result.data) {
+                setAllCategories(result.data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch all categories:', err);
+        }
+    };
+
+    // showDeletedが変更されたときにデータを取得
+    useEffect(() => {
+        if (showDeleted) {
+            fetchAllCategories();
+        }
+    }, [showDeleted, householdId, idToken]);
 
     // タブに応じてカテゴリをフィルタリング
-    const filteredCategories = categories.filter(cat => cat.type === activeTab);
+    const displayCategories = showDeleted ? allCategories : categories;
+    const filteredCategories = displayCategories.filter(cat => cat.type === activeTab);
 
     // モーダルを開く
     const openAddModal = () => {
@@ -88,6 +121,9 @@ export default function CategoriesPage() {
             }
 
             await refetch();
+            if (showDeleted) {
+                await fetchAllCategories();
+            }
             closeModal();
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -127,6 +163,9 @@ export default function CategoriesPage() {
             }
 
             await refetch();
+            if (showDeleted) {
+                await fetchAllCategories();
+            }
             closeModal();
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -158,6 +197,9 @@ export default function CategoriesPage() {
             }
 
             await refetch();
+            if (showDeleted) {
+                await fetchAllCategories();
+            }
             closeModal();
         } catch (err: any) {
             setErrorMessage(err.message);
@@ -202,6 +244,19 @@ export default function CategoriesPage() {
                         </button>
                     </div>
 
+                    {/* 削除済み表示トグル */}
+                    <div className="bg-white rounded-lg shadow p-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={showDeleted}
+                                onChange={(e) => setShowDeleted(e.target.checked)}
+                                className="w-4 h-4 text-blue-600"
+                            />
+                            <span className="text-sm text-gray-700">削除済みアイテムを表示</span>
+                        </label>
+                    </div>
+
                     {/* エラー表示 */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -230,42 +285,66 @@ export default function CategoriesPage() {
                                     </div>
                                 ) : (
                                     filteredCategories
-                                        .sort((a, b) => a.order - b.order)
-                                        .map((category) => (
-                                            <div
-                                                key={category.categoryId}
-                                                className="flex items-center justify-between px-6 py-4 hover:bg-gray-50"
-                                            >
-                                                <div className="flex items-center gap-3">
-                                                    <span
-                                                        className="text-2xl w-10 h-10 rounded-full flex items-center justify-center"
-                                                        style={{ backgroundColor: `${category.color}20` }}
-                                                    >
-                                                        {category.icon}
-                                                    </span>
-                                                    <div>
-                                                        <p className="font-medium">{category.name}</p>
-                                                        <p className="text-sm text-gray-500">
-                                                            順序: {category.order}
-                                                        </p>
+                                        .sort((a, b) => {
+                                            // 削除済みを下に表示
+                                            if (a.status === 'deleted' && b.status !== 'deleted') return 1;
+                                            if (a.status !== 'deleted' && b.status === 'deleted') return -1;
+                                            // 同じステータスの場合はorderでソート
+                                            return a.order - b.order;
+                                        })
+                                        .map((category) => {
+                                            const isDeleted = category.status === 'deleted';
+                                            return (
+                                                <div
+                                                    key={category.categoryId}
+                                                    className={`flex items-center justify-between px-6 py-4 hover:bg-gray-50 ${
+                                                        isDeleted ? 'opacity-50 bg-gray-50' : ''
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <span
+                                                            className="text-2xl w-10 h-10 rounded-full flex items-center justify-center"
+                                                            style={{ backgroundColor: `${category.color}20` }}
+                                                        >
+                                                            {category.icon}
+                                                        </span>
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className={`font-medium ${isDeleted ? 'line-through' : ''}`}>
+                                                                    {category.name}
+                                                                </p>
+                                                                {isDeleted && (
+                                                                    <span className="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">
+                                                                        削除済み
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <p className="text-sm text-gray-500">
+                                                                順序: {category.order}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        {!isDeleted && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => openEditModal(category)}
+                                                                    className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
+                                                                >
+                                                                    編集
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => openDeleteModal(category)}
+                                                                    className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+                                                                >
+                                                                    削除
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        onClick={() => openEditModal(category)}
-                                                        className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded"
-                                                    >
-                                                        編集
-                                                    </button>
-                                                    <button
-                                                        onClick={() => openDeleteModal(category)}
-                                                        className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
-                                                    >
-                                                        削除
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                 )}
                             </div>
                         </div>

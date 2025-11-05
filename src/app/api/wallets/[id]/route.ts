@@ -58,7 +58,7 @@ export async function PUT(
     }
 }
 
-// ウォレット削除
+// ウォレット削除（論理削除）
 export async function DELETE(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
@@ -76,16 +76,8 @@ export async function DELETE(
             );
         }
 
-        const wallet = doc.data() as Wallet;
-
-        if (wallet.isDefault) {
-            return NextResponse.json<ApiResponse>(
-                { success: false, error: 'デフォルトウォレットは削除できません' },
-                { status: 400 }
-            );
-        }
-
-        await docRef.delete();
+        // 論理削除: statusを'deleted'に変更
+        await docRef.update({ status: 'deleted' });
 
         return NextResponse.json<ApiResponse>(
             {
