@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useContext, Suspense } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { UserAuthComponent, UserAuthContext } from '@/components/context/user';
 import { HouseholdContext } from '@/components/context/household';
 import { Expense, ExpenseItem } from '@/types/firestore/Expense';
@@ -12,9 +12,14 @@ type TransactionType = 'expense' | 'income';
 function TransactionDetailForm() {
     const router = useRouter();
     const params = useParams();
+    const searchParams = useSearchParams();
     const id = params.id as string;
     const { userInfo, idToken } = useContext(UserAuthContext);
     const { categories, wallets, expenseTypes, loading: householdLoading, refetch } = useContext(HouseholdContext);
+
+    // クエリパラメーターから年月を取得
+    const year = searchParams.get('year');
+    const month = searchParams.get('month');
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -109,12 +114,14 @@ function TransactionDetailForm() {
                     }
                 } else {
                     alert(result.error || 'Failed to fetch transaction data');
-                    router.push('/transactions');
+                    const queryParams = year && month ? `?year=${year}&month=${month}` : '';
+                    router.push(`/transactions${queryParams}`);
                 }
             } catch (error) {
                 console.error('Fetch error:', error);
                 alert('An error occurred');
-                router.push('/transactions');
+                const queryParams = year && month ? `?year=${year}&month=${month}` : '';
+                router.push(`/transactions${queryParams}`);
             } finally {
                 setLoading(false);
             }
@@ -221,7 +228,8 @@ function TransactionDetailForm() {
             if (result.success) {
                 alert(result.message || 'Deleted successfully');
                 await refetch();
-                router.push('/transactions');
+                const queryParams = year && month ? `?year=${year}&month=${month}` : '';
+                router.push(`/transactions${queryParams}`);
             } else {
                 alert(result.error || 'Failed to delete');
             }
@@ -265,7 +273,10 @@ function TransactionDetailForm() {
                 <header className="bg-white shadow-sm p-4 sticky top-0 z-10">
                     <div className="flex items-center justify-between max-w-7xl mx-auto">
                         <button
-                            onClick={() => router.back()}
+                            onClick={() => {
+                                const queryParams = year && month ? `?year=${year}&month=${month}` : '';
+                                router.push(`/transactions${queryParams}`);
+                            }}
                             className="text-gray-600 hover:text-gray-800"
                             disabled={saving}
                         >

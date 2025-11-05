@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useContext, useMemo } from 'react';
+import { useState, useEffect, useContext, useMemo, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { UserAuthComponent, UserAuthContext } from '@/components/context/user';
 import { HouseholdContext } from '@/components/context/household';
 import Link from 'next/link';
@@ -18,19 +19,27 @@ type Transaction = {
     date: Date;
 };
 
-export default function TransactionsPage() {
+function TransactionsContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const { idToken } = useContext(UserAuthContext);
     const { householdId, categories } = useContext(HouseholdContext);
-    
+
     const [activeTab, setActiveTab] = useState<TransactionType>('all');
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [summary, setSummary] = useState({ income: 0, expense: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
-    
-    // 現在の年月をデフォルトとする
+
+    // クエリパラメーターから年月を取得、なければ現在の年月をデフォルトとする
     const now = new Date();
-    const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
-    const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth() + 1);
+    const yearParam = searchParams.get('year');
+    const monthParam = searchParams.get('month');
+    const [selectedYear, setSelectedYear] = useState<number>(
+        yearParam ? parseInt(yearParam) : now.getFullYear()
+    );
+    const [selectedMonth, setSelectedMonth] = useState<number>(
+        monthParam ? parseInt(monthParam) : now.getMonth() + 1
+    );
 
     // 年の選択肢を生成（過去5年から未来1年まで）
     const yearOptions = useMemo(() => {
@@ -51,6 +60,14 @@ export default function TransactionsPage() {
         const endDate = new Date(year, month, 0, 23, 59, 59, 999);
         return { startDate, endDate };
     };
+
+    // 年月が変更されたらURLのクエリパラメーターも更新
+    useEffect(() => {
+        const params = new URLSearchParams();
+        params.set('year', selectedYear.toString());
+        params.set('month', selectedMonth.toString());
+        router.replace(`/transactions?${params.toString()}`, { scroll: false });
+    }, [selectedYear, selectedMonth, router]);
 
     // APIからデータを取得
     useEffect(() => {
@@ -241,7 +258,7 @@ export default function TransactionsPage() {
                         {filteredTransactions.map((transaction) => (
                             <Link
                                 key={transaction.id}
-                                href={`/transactions/${transaction.type}-${transaction.id}`}
+                                href={`/transactions/${transaction.type}-${transaction.id}?year=${selectedYear}&month=${selectedMonth}`}
                                 className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition"
                             >
                                 <div className="flex items-center justify-between">
@@ -295,6 +312,21 @@ export default function TransactionsPage() {
                 </nav>
             </div>
         </UserAuthComponent>
+    );
+}
+
+export default function TransactionsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-4xl mb-4">⏳</div>
+                    <p className="text-gray-600">読み込み中...</p>
+                </div>
+            </div>
+        }>
+            <TransactionsContent />
+        </Suspense>
     );
 }
 
