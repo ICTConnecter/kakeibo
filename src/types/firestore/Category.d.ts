@@ -9,6 +9,7 @@
  * * createdAt：作成日時
  */
 export type CategoryType = 'expense' | 'income';
+export type status = 'active' | 'deleted';
 
 export type Category = {
     categoryId: string;
@@ -19,5 +20,6 @@ export type Category = {
     color: string; // カラーコード
     order: number; // 表示順
     createdAt: number;
+    status: status; // ステータス
 }
 

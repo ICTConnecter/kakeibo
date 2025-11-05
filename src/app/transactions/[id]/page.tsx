@@ -280,14 +280,21 @@ function TransactionDetailForm() {
                 </header>
 
                 <main className="max-w-3xl mx-auto p-4 space-y-4">
-                    {expense?.receiptImageUrl && (
+                    {expense?.receiptImageUrl && expense.receiptImageUrl.length > 0 && (
                         <div className="bg-white rounded-lg shadow p-4">
-                            <h2 className="text-lg font-semibold mb-3">Receipt Image</h2>
-                            <img
-                                src={expense.receiptImageUrl}
-                                alt="Receipt"
-                                className="w-full max-w-md mx-auto rounded-lg shadow"
-                            />
+                            <h2 className="text-lg font-semibold mb-3">
+                                Receipt Images ({expense.receiptImageUrl.length})
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {expense.receiptImageUrl.map((url, index) => (
+                                    <img
+                                        key={index}
+                                        src={url}
+                                        alt={`Receipt ${index + 1}`}
+                                        className="w-full rounded-lg shadow"
+                                    />
+                                ))}
+                            </div>
                         </div>
                     )}
 

@@ -8,6 +8,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '🍽️',
         color: '#FF6B6B',
         order: 1,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -15,6 +16,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '🏠',
         color: '#4ECDC4',
         order: 2,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -22,6 +24,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '💡',
         color: '#FFE66D',
         order: 3,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -29,6 +32,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '🚗',
         color: '#95E1D3',
         order: 4,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -36,6 +40,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '💊',
         color: '#F38181',
         order: 5,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -43,6 +48,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '🎮',
         color: '#AA96DA',
         order: 6,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -50,6 +56,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '👔',
         color: '#FCBAD3',
         order: 7,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -57,6 +64,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '📱',
         color: '#A8D8EA',
         order: 8,
+        status: 'active',
     },
     {
         type: 'expense',
@@ -64,6 +72,7 @@ export const DEFAULT_EXPENSE_CATEGORIES: Omit<Category, 'categoryId' | 'househol
         icon: '📦',
         color: '#D3D3D3',
         order: 9,
+        status: 'active',
     },
 ];
 
@@ -75,6 +84,7 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         icon: '💰',
         color: '#6BCF7F',
         order: 1,
+        status: 'active',
     },
     {
         type: 'income',
@@ -82,6 +92,7 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         icon: '💎',
         color: '#4A90E2',
         order: 2,
+        status: 'active',
     },
     {
         type: 'income',
@@ -89,6 +100,7 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         icon: '💼',
         color: '#F5A623',
         order: 3,
+        status: 'active',
     },
     {
         type: 'income',
@@ -96,6 +108,7 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         icon: '📈',
         color: '#7ED321',
         order: 4,
+        status: 'active',
     },
     {
         type: 'income',
@@ -103,6 +116,7 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         icon: '🎁',
         color: '#FFB6C1',
         order: 5,
+        status: 'active',
     },
     {
         type: 'income',
@@ -110,6 +124,7 @@ export const DEFAULT_INCOME_CATEGORIES: Omit<Category, 'categoryId' | 'household
         icon: '💵',
         color: '#B8E986',
         order: 6,
+        status: 'active',
     },
 ];
 

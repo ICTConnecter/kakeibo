@@ -8,6 +8,7 @@ export const DEFAULT_WALLETS: Omit<Wallet, 'walletId' | 'householdId' | 'created
         color: '#4CAF50',
         isDefault: true,
         order: 1,
+        status: 'active',
     },
     {
         name: 'クレジットカード',
@@ -15,6 +16,7 @@ export const DEFAULT_WALLETS: Omit<Wallet, 'walletId' | 'householdId' | 'created
         color: '#2196F3',
         isDefault: true,
         order: 2,
+        status: 'active',
     },
     {
         name: 'デビットカード',
@@ -22,6 +24,7 @@ export const DEFAULT_WALLETS: Omit<Wallet, 'walletId' | 'householdId' | 'created
         color: '#FF9800',
         isDefault: true,
         order: 3,
+        status: 'active',
     },
     {
         name: '電子マネー',
@@ -29,6 +32,7 @@ export const DEFAULT_WALLETS: Omit<Wallet, 'walletId' | 'householdId' | 'created
         color: '#9C27B0',
         isDefault: true,
         order: 4,
+        status: 'active',
     },
     {
         name: '銀行口座',
@@ -36,6 +40,7 @@ export const DEFAULT_WALLETS: Omit<Wallet, 'walletId' | 'householdId' | 'created
         color: '#607D8B',
         isDefault: true,
         order: 5,
+        status: 'active',
     },
 ];
 

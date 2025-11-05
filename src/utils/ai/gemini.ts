@@ -118,6 +118,88 @@ export const listAvailableModels = async () => {
     }
 };
 
+// 複数のレシート画像を解析（分割撮影したレシートを1つとして扱う）
+export const analyzeMultipleReceiptImages = async (
+    imageBase64Array: string[]
+): Promise<ReceiptAnalysisResult> => {
+    try {
+        const genAI = getGeminiClient();
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+        const prompt = `
+あなたはレシート画像を解析するAIアシスタントです。
+以下は長いレシートを分割して撮影した複数の画像です。これらを1つのレシートとして解析し、JSON形式で返してください。
+
+抽出する情報：
+- storeName: 店舗名（通常は最初の画像に記載）
+- date: 購入日時（ISO 8601形式、例: "2025-10-24T15:30:00+09:00"）
+- totalAmount: 合計金額（数値、通常は最後の画像に記載）
+- tax: 消費税額（数値）
+- items: 商品明細の配列（すべての画像から抽出）
+  - name: 商品名
+  - price: 単価（数値）
+  - quantity: 数量（数値）
+
+注意事項：
+- 複数の画像を順番に見て、1つの連続したレシートとして扱ってください
+- 数値はすべて整数で返してください
+- 日時が不明な場合は現在時刻を使用してください
+- 商品明細が読み取れない場合は空配列を返してください
+- レスポンスは必ずJSON形式のみで、余分な説明は含めないでください
+
+レスポンス形式：
+{
+  "storeName": "店舗名",
+  "date": "2025-10-24T15:30:00+09:00",
+  "totalAmount": 3580,
+  "tax": 258,
+  "items": [
+    {
+      "name": "商品名",
+      "price": 198,
+      "quantity": 1
+    }
+  ]
+}
+`;
+
+        // 複数画像を含むコンテンツを生成
+        const contents = [
+            prompt,
+            ...imageBase64Array.map((imageData) => ({
+                inlineData: {
+                    mimeType: 'image/jpeg',
+                    data: imageData,
+                },
+            })),
+        ];
+
+        const result = await model.generateContent(contents);
+        const response = await result.response;
+        const text = response.text();
+
+        // JSONを抽出（```json ``` のマークダウンブロックを削除）
+        const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/{[\s\S]*}/);
+
+        if (!jsonMatch) {
+            throw new Error('Failed to extract JSON from AI response');
+        }
+
+        const jsonText = jsonMatch[1] || jsonMatch[0];
+        const analysisResult: ReceiptAnalysisResult = JSON.parse(jsonText);
+
+        // データ検証
+        if (!analysisResult.storeName || !analysisResult.date || typeof analysisResult.totalAmount !== 'number') {
+            throw new Error('Invalid receipt analysis result');
+        }
+
+        return analysisResult;
+    } catch (error) {
+        console.error('Failed to analyze multiple receipt images:', error);
+        throw new Error('レシートの解析に失敗しました。画像が不鮮明な可能性があります。');
+    }
+};
+
 // レシート画像の品質チェック
 export const checkReceiptQuality = async (imageBase64: string): Promise<boolean> => {
     try {

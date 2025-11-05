@@ -85,9 +85,9 @@ export async function GET(request: NextRequest) {
 // 支出登録
 export async function POST(request: NextRequest) {
     try {
-        const body: CreateExpenseRequest = await request.json();
-        
-        const { householdId, amount, date, storeName, categoryId, walletId, expenseTypeId, items, memo, receiptImageUrl, receiptImageData } = body;
+        const body: any = await request.json();
+
+        const { householdId, amount, date, storeName, categoryId, walletId, expenseTypeId, items, memo, receiptImageUrl, receiptImageData, receiptImagesData } = body;
 
         // バリデーション
         if (!householdId || !amount || !date || !storeName || !categoryId || !walletId) {
@@ -104,18 +104,44 @@ export async function POST(request: NextRequest) {
         const userId = 'temp-user-id';
 
         // レシート画像のアップロード（Base64データがある場合）
-        let uploadedImageUrl = receiptImageUrl || '';
-        if (receiptImageData && !receiptImageUrl) {
+        let uploadedImageUrls: string[] = [];
+
+        if (receiptImagesData && receiptImagesData.length > 0) {
+            // 複数画像のアップロード
+            try {
+                for (let i = 0; i < receiptImagesData.length; i++) {
+                    const imageData = receiptImagesData[i];
+                    // Base64データからBufferに変換
+                    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+                    const buffer = Buffer.from(base64Data, 'base64');
+
+                    // ファイル名を生成
+                    const fileName = `receipt-${Date.now()}-${i + 1}.jpg`;
+
+                    // Storageにアップロード
+                    const url = await uploadReceiptImage(buffer, fileName, 'image/jpeg');
+                    uploadedImageUrls.push(url);
+                }
+            } catch (uploadError) {
+                console.error('Failed to upload receipt images during expense creation:', uploadError);
+                // アップロードに失敗しても支出登録は続行（画像なしで登録）
+            }
+        } else if (receiptImageUrl) {
+            // 後方互換性のため、単一の画像URLを配列に変換
+            uploadedImageUrls = [receiptImageUrl];
+        } else if (receiptImageData && !receiptImageUrl) {
+            // 単一画像のアップロード（後方互換性）
             try {
                 // Base64データからBufferに変換
                 const base64Data = receiptImageData.replace(/^data:image\/\w+;base64,/, '');
                 const buffer = Buffer.from(base64Data, 'base64');
-                
+
                 // ファイル名を生成
                 const fileName = `receipt-${Date.now()}.jpg`;
-                
+
                 // Storageにアップロード
-                uploadedImageUrl = await uploadReceiptImage(buffer, fileName, 'image/jpeg');
+                const url = await uploadReceiptImage(buffer, fileName, 'image/jpeg');
+                uploadedImageUrls = [url];
             } catch (uploadError) {
                 console.error('Failed to upload receipt image during expense creation:', uploadError);
                 // アップロードに失敗しても支出登録は続行（画像なしで登録）
@@ -133,7 +159,7 @@ export async function POST(request: NextRequest) {
             expenseTypeId: expenseTypeId || null,
             items: items || [],
             memo: memo || '',
-            receiptImageUrl: uploadedImageUrl,
+            receiptImageUrl: uploadedImageUrls,
             createdAt: now,
             updatedAt: now,
             createdBy: userId,

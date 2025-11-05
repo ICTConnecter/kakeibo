@@ -39,7 +39,7 @@ export type Expense = {
     expenseTypeId: string | null; // 経費タイプID（null許容）
     items: ExpenseItem[]; // 商品明細
     memo: string; // メモ
-    receiptImageUrl: string; // レシート画像URL（GCP Cloud Storage）
+    receiptImageUrl: string[]; // レシート画像URL（GCP Cloud Storage）
     createdAt: number;
     updatedAt: number;
     createdBy: string; // 作成者ユーザーID

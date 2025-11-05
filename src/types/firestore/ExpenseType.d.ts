@@ -8,6 +8,8 @@
  * * order：表示順
  * * createdAt：作成日時
  */
+
+export type status = 'active' | 'deleted';
 export type ExpenseType = {
     expenseTypeId: string;
     householdId: string; // 所属する家計簿ID
@@ -17,5 +19,6 @@ export type ExpenseType = {
     isDefault: boolean; // デフォルト経費タイプか
     order: number; // 表示順
     createdAt: number;
+    status: status; // ステータス
 }
 

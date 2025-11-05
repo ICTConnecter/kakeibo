@@ -63,12 +63,20 @@ export async function PUT(
         // TODO: 認証ユーザー情報を取得
         const userId = 'temp-user-id';
 
+        // receiptImageUrlを除外してupdateDataを作成
+        const { receiptImageUrl: _, receiptImageData: __, ...bodyWithoutImages } = body;
+
         const updateData: Partial<Expense> = {
-            ...body,
+            ...bodyWithoutImages,
             date: body.date ? new Date(body.date).getTime() : undefined,
             updatedAt: Date.now(),
             updatedBy: userId,
         };
+
+        // receiptImageUrlがstringの場合は配列に変換（後方互換性のため）
+        if (body.receiptImageUrl && typeof body.receiptImageUrl === 'string') {
+            updateData.receiptImageUrl = [body.receiptImageUrl];
+        }
 
         // undefinedのフィールドを削除
         Object.keys(updateData).forEach(key => {
@@ -122,9 +130,11 @@ export async function DELETE(
 
         const expense = doc.data() as Expense;
 
-        // レシート画像を削除
-        if (expense.receiptImageUrl) {
-            await deleteReceiptImage(expense.receiptImageUrl);
+        // レシート画像を削除（複数画像対応）
+        if (expense.receiptImageUrl && expense.receiptImageUrl.length > 0) {
+            for (const imageUrl of expense.receiptImageUrl) {
+                await deleteReceiptImage(imageUrl);
+            }
         }
 
         // Firestoreから削除

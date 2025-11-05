@@ -21,7 +21,7 @@ function ReceiptConfirmForm() {
         expenseTypeId: '',
         memo: '',
         items: [] as any[],
-        receiptImageData: '', // Base64画像データ
+        receiptImagesData: [] as string[], // 複数のBase64画像データ
     });
     
     // ユーザー情報からhouseholdIdを設定
@@ -36,9 +36,23 @@ function ReceiptConfirmForm() {
         if (dataParam) {
             try {
                 const parsedData = JSON.parse(dataParam);
-                
-                // sessionStorageから画像データを取得
-                const receiptImageData = sessionStorage.getItem('receiptImageData') || '';
+
+                // sessionStorageから画像データを取得（複数画像対応）
+                let receiptImagesData: string[] = [];
+                const imagesDataStr = sessionStorage.getItem('receiptImagesData');
+                if (imagesDataStr) {
+                    try {
+                        receiptImagesData = JSON.parse(imagesDataStr);
+                    } catch {
+                        receiptImagesData = [];
+                    }
+                } else {
+                    // 後方互換性：単一画像の場合
+                    const singleImageData = sessionStorage.getItem('receiptImageData');
+                    if (singleImageData) {
+                        receiptImagesData = [singleImageData];
+                    }
+                }
 
                 // 日付をdatetime-local形式に変換（YYYY-MM-DDThh:mm）
                 let formattedDate = new Date().toISOString().slice(0, 16);
@@ -59,10 +73,10 @@ function ReceiptConfirmForm() {
                         console.error('日付の変換に失敗しました:', error);
                     }
                 }
-                
+
                 console.log('取得した日付:', parsedData.date);
                 console.log('フォーム用に変換した日付:', formattedDate);
-                
+
                 setFormData({
                     storeName: parsedData.storeName || '',
                     date: formattedDate,
@@ -72,7 +86,7 @@ function ReceiptConfirmForm() {
                     expenseTypeId: '',
                     memo: '',
                     items: parsedData.items || [],
-                    receiptImageData, // sessionStorageから取得したBase64データ
+                    receiptImagesData, // sessionStorageから取得した複数のBase64データ
                 });
             } catch (error) {
                 console.error('Failed to parse data:', error);
@@ -102,6 +116,8 @@ function ReceiptConfirmForm() {
                     householdId,
                     ...formData,
                     expenseTypeId: formData.expenseTypeId || null,
+                    // 複数画像データを送信
+                    receiptImagesData: formData.receiptImagesData,
                 }),
             });
 
@@ -110,10 +126,11 @@ function ReceiptConfirmForm() {
             if (result.success) {
                 // 登録成功後、sessionStorageをクリア
                 sessionStorage.removeItem('receiptImageData');
-                
+                sessionStorage.removeItem('receiptImagesData');
+
                 // データを再取得してからホーム画面に遷移
                 await refetch();
-                
+
                 alert('支出を登録しました！');
                 router.push('/home');
             } else {
@@ -136,6 +153,7 @@ function ReceiptConfirmForm() {
                         <button
                             onClick={() => {
                                 sessionStorage.removeItem('receiptImageData');
+                                sessionStorage.removeItem('receiptImagesData');
                                 router.back();
                             }}
                             className="text-gray-600 hover:text-gray-800"
@@ -148,14 +166,26 @@ function ReceiptConfirmForm() {
                 </header>
 
                 <main className="max-w-3xl mx-auto p-4">
-                    {/* レシート画像 */}
-                    {formData.receiptImageData && (
+                    {/* レシート画像（複数画像対応） */}
+                    {formData.receiptImagesData && formData.receiptImagesData.length > 0 && (
                         <div className="mb-6">
-                            <img
-                                src={formData.receiptImageData}
-                                alt="レシート"
-                                className="w-full max-w-md mx-auto rounded-lg shadow"
-                            />
+                            <h3 className="text-sm font-medium text-gray-700 mb-3 text-center">
+                                レシート画像 ({formData.receiptImagesData.length}枚)
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4 max-w-2xl mx-auto">
+                                {formData.receiptImagesData.map((imageData, index) => (
+                                    <div key={index} className="relative">
+                                        <img
+                                            src={imageData}
+                                            alt={`レシート ${index + 1}`}
+                                            className="w-full rounded-lg shadow"
+                                        />
+                                        <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-xs">
+                                            {index + 1}枚目
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
@@ -280,6 +310,7 @@ function ReceiptConfirmForm() {
                                 type="button"
                                 onClick={() => {
                                     sessionStorage.removeItem('receiptImageData');
+                                    sessionStorage.removeItem('receiptImagesData');
                                     router.back();
                                 }}
                                 className="flex-1 py-3 px-6 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"

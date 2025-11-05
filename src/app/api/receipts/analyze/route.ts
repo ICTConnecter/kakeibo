@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzeReceipt, checkReceiptQuality } from '@/utils/ai/gemini';
+import { analyzeReceipt, analyzeMultipleReceiptImages } from '@/utils/ai/gemini';
 import { ApiResponse, ReceiptAnalysisResult } from '@/types/api';
 
 export async function POST(request: NextRequest) {
     try {
-        const { image } = await request.json();
+        const { image, images } = await request.json();
 
-        if (!image) {
+        // 単一画像または複数画像のいずれかが必要
+        if (!image && (!images || images.length === 0)) {
             return NextResponse.json<ApiResponse>(
                 {
                     success: false,
@@ -16,24 +17,21 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Base64形式の画像データから不要なプレフィックスを削除
-        const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+        let result: ReceiptAnalysisResult;
 
-        // 画像品質チェック（一時的にスキップ）
-        // const isQualityGood = await checkReceiptQuality(base64Data);
-        // 
-        // if (!isQualityGood) {
-        //     return NextResponse.json<ApiResponse>(
-        //         {
-        //             success: false,
-        //             error: 'レシート画像が不鮮明です。再度撮影してください。',
-        //         },
-        //         { status: 400 }
-        //     );
-        // }
+        if (images && images.length > 0) {
+            // 複数画像の場合
+            const base64DataArray = images.map((img: string) =>
+                img.replace(/^data:image\/\w+;base64,/, '')
+            );
 
-        // レシート解析
-        const result = await analyzeReceipt(base64Data);
+            // 複数画像を解析（1つのレシートとして扱う）
+            result = await analyzeMultipleReceiptImages(base64DataArray);
+        } else {
+            // 単一画像の場合（後方互換性）
+            const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+            result = await analyzeReceipt(base64Data);
+        }
 
         return NextResponse.json<ApiResponse<ReceiptAnalysisResult>>(
             {
@@ -44,7 +42,7 @@ export async function POST(request: NextRequest) {
         );
     } catch (error) {
         console.error('Receipt analysis error:', error);
-        
+
         return NextResponse.json<ApiResponse>(
             {
                 success: false,
