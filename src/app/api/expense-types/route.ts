@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
             isDefault: false,
             order: maxOrder + 1,
             createdAt: Date.now(),
+            status: 'active',
         };
 
         const docRef = await db.collection('expenseTypes').add(newExpenseType);

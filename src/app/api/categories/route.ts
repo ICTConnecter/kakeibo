@@ -85,6 +85,7 @@ export async function POST(request: NextRequest) {
             color,
             order: maxOrder + 1,
             createdAt: Date.now(),
+            status: 'active',
         };
 
         const docRef = await db.collection('categories').add(newCategory);
