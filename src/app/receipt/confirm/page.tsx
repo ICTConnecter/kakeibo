@@ -96,12 +96,22 @@ function ReceiptConfirmForm() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validate items total matches amount if items are provided
+        if (formData.items.length > 0) {
+            const itemsTotal = formData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            if (itemsTotal !== formData.amount) {
+                alert(`エラー: 金額 (¥${formData.amount.toLocaleString()}) と商品明細の合計 (¥${itemsTotal.toLocaleString()}) が一致しません。修正してください。`);
+                return;
+            }
+        }
+
         setLoading(true);
 
         try {
             // userInfoから実際のhouseholdIdを取得
             const householdId = userInfo?.households?.[0]?.householdId;
-            
+
             if (!householdId) {
                 alert('家計簿情報が見つかりません');
                 return;
@@ -303,6 +313,81 @@ function ReceiptConfirmForm() {
                                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
                                 rows={3}
                             />
+                        </div>
+
+                        {/* 商品明細 */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                商品明細（任意）
+                            </label>
+                            <div className="space-y-3">
+                                {formData.items.map((item, index) => (
+                                    <div key={index} className="flex gap-2 items-start p-3 bg-gray-50 rounded-lg">
+                                        <div className="flex-1 space-y-2">
+                                            <input
+                                                type="text"
+                                                placeholder="商品名"
+                                                value={item.name}
+                                                onChange={(e) => {
+                                                    const newItems = [...formData.items];
+                                                    newItems[index] = { ...newItems[index], name: e.target.value };
+                                                    setFormData({ ...formData, items: newItems });
+                                                }}
+                                                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="number"
+                                                    placeholder="単価"
+                                                    value={item.price}
+                                                    onChange={(e) => {
+                                                        const newItems = [...formData.items];
+                                                        newItems[index] = { ...newItems[index], price: Number(e.target.value) };
+                                                        setFormData({ ...formData, items: newItems });
+                                                    }}
+                                                    className="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                />
+                                                <input
+                                                    type="number"
+                                                    placeholder="数量"
+                                                    value={item.quantity}
+                                                    onChange={(e) => {
+                                                        const newItems = [...formData.items];
+                                                        newItems[index] = { ...newItems[index], quantity: Number(e.target.value) };
+                                                        setFormData({ ...formData, items: newItems });
+                                                    }}
+                                                    className="w-24 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                                                />
+                                                <div className="px-3 py-2 bg-white border rounded-lg text-sm font-medium whitespace-nowrap">
+                                                    ¥{(item.price * item.quantity).toLocaleString()}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const newItems = formData.items.filter((_, i) => i !== index);
+                                                setFormData({ ...formData, items: newItems });
+                                            }}
+                                            className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setFormData({
+                                            ...formData,
+                                            items: [...formData.items, { name: '', price: 0, quantity: 1 }]
+                                        });
+                                    }}
+                                    className="w-full py-2 px-4 border border-dashed border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50"
+                                >
+                                    + 商品を追加
+                                </button>
+                            </div>
                         </div>
 
                         <div className="flex gap-4 pt-4">
