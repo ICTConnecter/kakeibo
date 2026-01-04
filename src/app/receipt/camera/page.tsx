@@ -37,11 +37,11 @@ export default function ReceiptCameraPage() {
         setAnalyzing(true);
         try {
             // レシート解析APIを呼び出し（複数画像対応・圧縮処理付き）
-            const result = await analyzeReceipt({ images: capturedImages });
+            const { response: result, compressedImages } = await analyzeReceipt({ images: capturedImages });
 
             if (result.success) {
-                // 画像データはsessionStorageに保存（URLが長くなりすぎるのを防ぐ）
-                sessionStorage.setItem('receiptImagesData', JSON.stringify(capturedImages));
+                // 圧縮後の画像データをsessionStorageに保存
+                sessionStorage.setItem('receiptImagesData', JSON.stringify(compressedImages));
 
                 // 確認画面に遷移（解析結果のみURLで渡す）
                 const params = new URLSearchParams({

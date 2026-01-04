@@ -61,8 +61,14 @@ async function compressImages(images: string[]): Promise<string[]> {
     return Promise.all(images.map(compressImage));
 }
 
+// レシート解析の結果（圧縮画像を含む）
+export type AnalyzeReceiptResultWithImages = {
+    response: AnalyzeReceiptResponse;
+    compressedImages: string[];
+};
+
 // レシート解析
-export async function analyzeReceipt(data: AnalyzeReceiptRequest): Promise<AnalyzeReceiptResponse> {
+export async function analyzeReceipt(data: AnalyzeReceiptRequest): Promise<AnalyzeReceiptResultWithImages> {
     // 画像を圧縮・リサイズ
     const compressedImages = await compressImages(data.images);
 
@@ -73,6 +79,11 @@ export async function analyzeReceipt(data: AnalyzeReceiptRequest): Promise<Analy
         },
         body: JSON.stringify({ images: compressedImages }),
     });
-    return response.json();
+    const jsonResponse = await response.json();
+
+    return {
+        response: jsonResponse,
+        compressedImages,
+    };
 }
 
