@@ -140,8 +140,7 @@ AIを活用した家計簿管理システム。レシートをカメラで撮影
 users/{userId}
   - userId: string (LINE User ID)
   - displayName: string
-  - pictureUrl: string
-  - email: string
+  - householdIds: string[]
   - createdAt: timestamp
   - updatedAt: timestamp
 ```
