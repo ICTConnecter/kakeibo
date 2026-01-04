@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserAuthComponent } from '@/components/context/user';
+import { analyzeReceipt } from '@/app/api/receipts/analyze/fetcher';
 
 export default function ReceiptCameraPage() {
     const router = useRouter();
@@ -35,16 +36,8 @@ export default function ReceiptCameraPage() {
 
         setAnalyzing(true);
         try {
-            // レシート解析APIを呼び出し（複数画像対応）
-            const response = await fetch('/api/receipts/analyze', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ images: capturedImages }),
-            });
-
-            const result = await response.json();
+            // レシート解析APIを呼び出し（複数画像対応・圧縮処理付き）
+            const result = await analyzeReceipt({ images: capturedImages });
 
             if (result.success) {
                 // 画像データはsessionStorageに保存（URLが長くなりすぎるのを防ぐ）
