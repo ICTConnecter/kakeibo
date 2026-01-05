@@ -33,14 +33,19 @@ export async function GET(request: Request) {
 
         const householdData = householdDoc.data() as Omit<Household, 'householdId'>;
 
+        // ユーザーが登録済みか確認
+        const userDoc = await db.collection('users').doc(userId).get();
+        const needsRegistration = !userDoc.exists;
+
         // 既にメンバーかどうかを確認
-        const alreadyMember = householdData.members.some(member => member.userId === userId);
+        const alreadyMember = !needsRegistration && householdData.members.some(member => member.userId === userId);
 
         return NextResponse.json({
             success: true,
             data: {
                 householdName: householdData.name,
                 alreadyMember,
+                needsRegistration,
             },
         });
     } catch (error) {

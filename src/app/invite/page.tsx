@@ -18,6 +18,7 @@ export default function InvitePage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
     const [alreadyMember, setAlreadyMember] = useState(false);
+    const [needsRegistration, setNeedsRegistration] = useState(false);
 
     // 招待情報を取得
     useEffect(() => {
@@ -37,6 +38,11 @@ export default function InvitePage() {
                 if (res.ok && data.success) {
                     setHouseholdName(data.data.householdName);
                     setAlreadyMember(data.data.alreadyMember || false);
+                    setNeedsRegistration(data.data.needsRegistration || false);
+                } else if (res.status === 404 && data.needsRegistration) {
+                    // ユーザーが未登録
+                    setNeedsRegistration(true);
+                    setHouseholdName(data.data?.householdName || null);
                 } else {
                     setError(data.error || '招待情報の取得に失敗しました');
                 }
@@ -140,7 +146,7 @@ export default function InvitePage() {
                     )}
 
                     {/* 既にメンバー */}
-                    {!loading && !error && alreadyMember && !success && (
+                    {!loading && !error && alreadyMember && !success && !needsRegistration && (
                         <div className="text-center">
                             <div className="text-6xl mb-4">!</div>
                             <h1 className="text-xl font-bold text-gray-800 mb-2">既に参加しています</h1>
@@ -162,8 +168,45 @@ export default function InvitePage() {
                         </div>
                     )}
 
+                    {/* ユーザー未登録 */}
+                    {!loading && !error && needsRegistration && !success && (
+                        <div className="text-center">
+                            <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <h1 className="text-xl font-bold text-gray-800 mb-2">家計簿への招待</h1>
+                            {householdName && (
+                                <>
+                                    <p className="text-gray-600 mb-2">
+                                        以下の家計簿に招待されています
+                                    </p>
+                                    <p className="text-2xl font-bold text-blue-600 mb-4">
+                                        {householdName}
+                                    </p>
+                                </>
+                            )}
+                            <p className="text-gray-600 mb-6">
+                                招待を受けるには、まずアカウント登録が必要です。
+                            </p>
+                            <Link
+                                href={`/register?redirect=/invite&householdId=${householdId}`}
+                                className="inline-block w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium"
+                            >
+                                アカウント登録へ進む
+                            </Link>
+                            <button
+                                onClick={handleClose}
+                                className="w-full mt-3 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
+                            >
+                                キャンセル
+                            </button>
+                        </div>
+                    )}
+
                     {/* 招待確認 */}
-                    {!loading && !error && !alreadyMember && !success && (
+                    {!loading && !error && !alreadyMember && !needsRegistration && !success && (
                         <div className="text-center">
                             <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
                                 <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

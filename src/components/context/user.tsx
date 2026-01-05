@@ -65,7 +65,7 @@ export const UserAuthComponent = ({ children }: Props) => {
     if (typeof window === 'undefined') {
       return;
     }
-    if (!idToken || window.location.pathname === '/register') {
+    if (!idToken || window.location.pathname === '/register' || window.location.pathname === '/invite') {
       return;
     }
     auth(idToken);
@@ -76,7 +76,7 @@ export const UserAuthComponent = ({ children }: Props) => {
       <UserAuthContext.Provider
         value={{ userInfo, idToken }}
       >
-        {userInfo || (typeof window !== 'undefined' && window.location.pathname === '/register') ? children : null}
+        {userInfo || (typeof window !== 'undefined' && (window.location.pathname === '/register' || window.location.pathname === '/invite')) ? children : null}
         {isError ? <>エラー</> : null}
         {!userInfo && !isError ? <>ローディング</> : null}
       </UserAuthContext.Provider>

@@ -9,7 +9,11 @@
       "Bash(dir:*)",
       "Bash(findstr:*)",
       "Bash(npm install:*)",
-      "Bash(npm view:*)"
+      "Bash(npm view:*)",
+      "Bash(if not exist \"c:\\\\Users\\\\clown\\\\OneDrive\\\\ドキュメント\\\\code\\\\kakeibo\\\\src\\\\app\\\\invite\" mkdir \"c:\\\\Users\\\\clown\\\\OneDrive\\\\ドキュメント\\\\code\\\\kakeibo\\\\src\\\\app\\\\invite\")",
+      "Bash(if not exist \"c:\\\\Users\\\\clown\\\\OneDrive\\\\ドキュメント\\\\code\\\\kakeibo\\\\src\\\\app\\\\api\\\\invite\" mkdir \"c:\\\\Users\\\\clown\\\\OneDrive\\\\ドキュメント\\\\code\\\\kakeibo\\\\src\\\\app\\\\api\\\\invite\")",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: LINEで家計簿メンバーを招待する機能を追加\n\nオーナー権限を持つユーザーがLINEの友達に招待メッセージを送信できる機能を実装。\n- 共有設定ページに家計簿選択プルダウンとLINE招待ボタンを追加\n- shareTargetPicker APIでFlex Messageによる招待を送信\n- 招待受け入れページ（/invite）と招待API（/api/invite）を新規作成\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
     ],
     "deny": [],
     "ask": []
