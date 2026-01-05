@@ -70,8 +70,11 @@ export default function SharingPage() {
         setInviteSuccess(false);
 
         try {
-            // 招待用URLを生成（LIFFアプリのURL + 招待トークン）
-            const inviteUrl = `${window.location.origin}/invite?householdId=${household.householdId}`;
+            // 招待用URLを生成（LIFF URL形式）
+            const liffId = process.env.NEXT_PUBLIC_LIFF_ID;
+            const inviteUrl = liffId
+                ? `https://liff.line.me/${liffId}/invite?householdId=${household.householdId}`
+                : `${window.location.origin}/invite?householdId=${household.householdId}`;
 
             // LINEの友達選択画面を表示してメッセージを送信
             const result = await liffObject.shareTargetPicker([
